@@ -1,0 +1,48 @@
+# Secrets and local environment
+.env
+.env.*
+secrets.toml
+*.key
+*.pem
+
+# Python
+__pycache__/
+*.py[cod]
+.Python
+.venv/
+venv/
+.conda/
+
+# Jupyter
+.ipynb_checkpoints/
+notebooks/catboost_info/
+
+# Data artifacts (keep structure via .gitkeep)
+data/raw/*
+!data/raw/.gitkeep
+!data/raw/README.md
+data/processed/*
+!data/processed/.gitkeep
+
+# Model and pipeline outputs
+models/*
+!models/.gitkeep
+outputs/*
+!outputs/.gitkeep
+
+# OS and editor
+.DS_Store
+.cursor/
+.vscode/
+.idea/
+
+# Local workspace (optional IDE config)
+# *.code-workspace
+docs/interview_script.md
+docs/resume_project_packaging.md
+interview_guide.md
+private-prep/
+private-prep
+node_modules/
+.next/
+*.pyc

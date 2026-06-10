@@ -1,0 +1,15 @@
+{
+  "folders": [
+    {
+      "path": "."
+    }
+  ],
+  "settings": {
+    "python.defaultInterpreterPath": "${workspaceFolder}/.conda/bin/python",
+    "notebook.defaultKernel": "used-car-pricing",
+    "jupyter.kernels.excludePythonEnvironments": [
+      "/usr/bin/python3",
+      "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/bin/python3"
+    ]
+  }
+}
