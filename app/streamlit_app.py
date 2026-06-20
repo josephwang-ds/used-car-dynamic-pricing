@@ -656,6 +656,44 @@ def plot_action_breakdown(inv, title="", label_map=None) -> plt.Figure:
     return fig
 
 
+def plot_inv_by_segment(segments, fresh, aged, title="", fresh_lbl="< 90 days", aged_lbl="90+ days") -> plt.Figure:
+    order = np.argsort(np.array(fresh) + np.array(aged))
+    seg = [segments[i] for i in order]; fr = [fresh[i] for i in order]; ag = [aged[i] for i in order]
+    fig, ax = plt.subplots(figsize=(7, 3.8))
+    ax.barh(seg, fr, color="#c7d2fe", label=fresh_lbl, edgecolor="white")
+    ax.barh(seg, ag, left=fr, color=WARN, label=aged_lbl, edgecolor="white")
+    for i, (f, a) in enumerate(zip(fr, ag)):
+        if a > 0:
+            ax.text(f + a + 0.4, i, str(a), va="center", fontsize=8.5, fontweight="bold", color="#9a3412")
+    ax.set_title(title, pad=8); ax.legend(fontsize=8, frameon=False, ncol=2, loc="lower right")
+    _clean(ax, x=True)
+    plt.tight_layout()
+    return fig
+
+
+def plot_score_contrib(row, dealers, sel_lbl, avg_lbl, cats, title="") -> plt.Figure:
+    comp_cols = ["sales_index", "aftersales_index", "cx_index", "compliance_index"]
+    weights = [0.45, 0.35, 0.15, 0.05]
+    colors = ["#4f46e5", "#16a34a", "#f59e0b", "#94a3b8"]
+    sel = [row[c] * w for c, w in zip(comp_cols, weights)]
+    avg = [dealers[c].mean() * w for c, w in zip(comp_cols, weights)]
+    fig, ax = plt.subplots(figsize=(7, 2.8))
+    for bars, label, yy in [(avg, avg_lbl, 0), (sel, sel_lbl, 1)]:
+        left = 0
+        for v, c, cat in zip(bars, colors, cats):
+            ax.barh(yy, v, left=left, color=c, edgecolor="white",
+                    label=cat if yy == 1 else None)
+            left += v
+        ax.text(left + 1, yy, f"{left:.0f}", va="center", fontsize=10, fontweight="bold", color=INK)
+    ax.set_yticks([0, 1]); ax.set_yticklabels([avg_lbl, sel_lbl], fontweight="bold")
+    ax.set_xlim(0, max(sum(sel), sum(avg)) * 1.12)
+    ax.set_title(title, pad=8)
+    ax.legend(fontsize=7.5, frameon=False, ncol=4, loc="upper center", bbox_to_anchor=(0.5, -0.18))
+    _clean(ax, x=True)
+    plt.tight_layout()
+    return fig
+
+
 def figure_exists(filename: str):
     path = FIGURE_DIR / filename
     return path if path.exists() else None
@@ -671,7 +709,9 @@ def show_figure_or_note(filename, caption, fallback) -> None:
 
 # ═══════════════════════════════════════════════════════════════════════════
 add_css()
-lang = st.sidebar.radio("语言 / Language", ["English", "中文"], horizontal=True)
+st.sidebar.markdown("### 🌐 Language / 语言")
+lang = st.sidebar.radio("Language / 语言", ["English", "中文"], horizontal=True, label_visibility="collapsed")
+st.sidebar.divider()
 
 
 def t(en: str, zh: str) -> str:
@@ -690,51 +730,18 @@ cpo_inventory = data["cpo_inventory"]
 nat = national_kpis(dealers)
 
 
-# ── Sidebar: CPO single-vehicle pricing inputs ────────────────────────────────
-st.sidebar.markdown(f"### 🚗 {t('CPO pricing inputs','CPO 定价输入')}")
+# ── Sidebar: language + about only (CPO vehicle inputs live in the CPO tab) ────
+st.sidebar.markdown(f"#### {t('About','关于')}")
 st.sidebar.markdown(
-    f'<div class="warning-callout">{t("Network figures are synthetic. The single-vehicle pricing model runs on a public used-car dataset (rule-based simulator in this demo).","经销商网络为合成数据。单车定价模型基于公开二手车数据集（本演示用规则模拟器）。")}</div>',
+    f'<div class="warning-callout">{t("Portfolio demo. Dealer-network figures are 100% synthetic; no real company data. The single-vehicle pricing model runs on a public used-car dataset.","作品集演示。经销商网络数据 100% 合成，无任何真实企业数据。单车定价模型基于公开二手车数据集。")}</div>',
     unsafe_allow_html=True,
 )
-body_type_names_en = {0: "Sedan", 1: "Hatchback", 2: "SUV", 3: "Estate", 4: "Convertible", 5: "Coupe", 6: "MPV", 7: "Other"}
-body_type_names_zh = {0: "轿车", 1: "掀背", 2: "SUV", 3: "旅行", 4: "敞篷", 5: "跑车", 6: "MPV", 7: "其他"}
-with st.sidebar.expander(t("Vehicle inputs", "车辆输入"), expanded=False):
-    brand = st.selectbox(t("Brand tier (0=budget, 15=luxury)", "品牌档次 (0=经济,15=豪华)"), BRAND_OPTIONS, index=6)
-    model = st.selectbox(t("Model code", "车型代码"), MODEL_OPTIONS, index=3)
-    body_type_map = body_type_names_zh if lang == "中文" else body_type_names_en
-    body_type = st.selectbox(t("Body type", "车身类型"), BODY_TYPE_OPTIONS,
-                             format_func=lambda x: body_type_map.get(int(x), str(x)), index=2)
-    car_age_years = st.slider(t("Vehicle age (years)", "车龄（年）"), 0.5, 20.0, 5.0, 0.5)
-    kilometer = st.slider(t("Mileage (10k km)", "里程（万公里）"), 0.5, 15.0, 5.0, 0.5)
-    power = st.slider(t("Engine power (hp)", "发动机功率（马力）"), 50, 600, 160, 10)
-    not_repaired_damage = st.selectbox(t("Damage status", "损坏状态"), DAMAGE_OPTIONS,
-                                       format_func=lambda x: t("No unrepaired damage", "无未修复损坏") if x == 0 else t("Has unrepaired damage", "有未修复损坏"))
-    fuel_type = st.selectbox(t("Fuel type", "燃料类型"), FUEL_TYPE_OPTIONS,
-                             format_func=lambda x: t("Petrol / Diesel", "汽油 / 柴油") if x == 0 else t("EV / Hybrid", "纯电 / 混动"))
-    gearbox = st.selectbox(t("Gearbox", "变速箱"), GEARBOX_OPTIONS,
-                           format_func=lambda x: t("Manual", "手动") if x == 0 else t("Automatic", "自动"))
-    current_listing = st.number_input(t("Current listing price (CNY)", "当前挂牌价（元）"),
-                                      min_value=500, max_value=200_000, value=12_000, step=500)
-inputs = dict(brand=brand, model=model, body_type=body_type, car_age_years=car_age_years,
-              kilometer=kilometer, power=power, not_repaired_damage=not_repaired_damage,
-              fuel_type=fuel_type, gearbox=gearbox, current_listing=current_listing)
-if "preset_inputs" in st.session_state:
-    for k, v in st.session_state.pop("preset_inputs").items():
-        if k != "intro":
-            inputs[k] = v
+st.sidebar.markdown(f"🌐 {t('Use the toggle above to switch language.','用上方按钮切换中英文。')}")
 st.sidebar.divider()
-st.sidebar.markdown(f"[GitHub]({GITHUB_URL})")
+st.sidebar.markdown(f"[GitHub →]({GITHUB_URL})")
 
-fair_price = predict_fair_price_mock(int(inputs["brand"]), float(inputs["model"]),
-                                     float(inputs["car_age_years"]), float(inputs["kilometer"]),
-                                     float(inputs["power"]), float(inputs["fuel_type"]),
-                                     float(inputs["gearbox"]), float(inputs["body_type"]),
-                                     float(inputs["not_repaired_damage"]))
-current_listing = float(inputs["current_listing"])
-price_gap = current_listing - fair_price
-price_gap_pct = price_gap / fair_price if fair_price > 0 else 0.0
-status = pricing_status(price_gap_pct)
-rec_price = recommended_listing_price(fair_price, status, current_listing)
+BODY_TYPE_NAMES_EN = {0: "Sedan", 1: "Hatchback", 2: "SUV", 3: "Estate", 4: "Convertible", 5: "Coupe", 6: "MPV", 7: "Other"}
+BODY_TYPE_NAMES_ZH = {0: "轿车", 1: "掀背", 2: "SUV", 3: "旅行", 4: "敞篷", 5: "跑车", 6: "MPV", 7: "其他"}
 
 
 # ── Header ────────────────────────────────────────────────────────────────────
@@ -851,8 +858,10 @@ with sales_tab:
         st.caption(t("CPO is the only line below target — the rest is healthy.",
                      "仅 CPO 低于目标，其余业务线健康。"))
     with g2:
-        reg_cpo = dealers.groupby("region").apply(
-            lambda x: x.cpo_units.sum() / x.cpo_target.sum()).reindex(REGIONS)
+        reg_cpo = (
+            dealers.groupby("region")["cpo_units"].sum()
+            / dealers.groupby("region")["cpo_target"].sum()
+        ).reindex(REGIONS)
         labels = [REGIONS_ZH[r] if (lang == "中文" and CJK_OK) else r for r in REGIONS]
         weak = int(np.argmin(reg_cpo.values))
         st.pyplot(plot_hbar(labels, list(reg_cpo.values), fmt="{:.0%}",
@@ -869,7 +878,7 @@ with sales_tab:
         t("Target", "目标"): [dealers.nc_target.sum(), dealers.cpo_target.sum(), dealers.vans_target.sum()],
         t("Achievement", "达成率"): [f"{nc_achv:.1%}", f"{cpo_achv:.1%}", f"{vans_achv:.1%}"],
     })
-    st.dataframe(line_tbl, hide_index=True, use_container_width=True)
+    st.dataframe(line_tbl, hide_index=True, width="stretch")
 
     st.markdown(f"#### {t('Sales by region','分区域销售')}")
     reg = dealers.groupby("region").agg(
@@ -888,7 +897,7 @@ with sales_tab:
         t("Days Supply", "库存天数"): reg["days_supply"].map(lambda x: f"{x:.0f}"),
         t("90+ Aging", "90天+库存"): reg["aging_90"].map(lambda x: f"{x:.1%}"),
     })
-    st.dataframe(reg_disp, hide_index=True, use_container_width=True)
+    st.dataframe(reg_disp, hide_index=True, width="stretch")
     st.markdown(f'<div class="callout">{t("Design principle: NC / CPO / Vans achievement are computed separately, never summed before comparison. East region carries the CPO shortfall driven by DLR-E07.","设计原则：NC / CPO / Vans 达成率分别计算，不简单相加后比较。华东区的 CPO 缺口主要来自 DLR-E07。")}</div>', unsafe_allow_html=True)
 
 
@@ -964,7 +973,7 @@ with aftersales_tab:
         t("First-Time Fix", "一次修复"): reg["ftf"].map(lambda x: f"{x:.0%}"),
         t("CSI", "满意度"): reg["csi"].map(lambda x: f"{x:.1f}"),
     })
-    st.dataframe(reg_disp, hide_index=True, use_container_width=True)
+    st.dataframe(reg_disp, hide_index=True, width="stretch")
     st.markdown(f'<div class="callout">{t("East region trails on retention and CSI — the same DLR-E07 weakness that shows up in Dealer 360 and feeds the CPO action list.","华东区在回厂率与满意度上落后 —— 与 Dealer 360 中 DLR-E07 的短板一致，并最终汇入 CPO 行动清单。")}</div>', unsafe_allow_html=True)
 
 
@@ -989,7 +998,7 @@ with dealer_tab:
             t("After-sales", "售后"): dealers["aftersales_index"].map(lambda x: f"{x:.0f}"),
             t("CX", "体验"): dealers["cx_index"].map(lambda x: f"{x:.0f}"),
         })
-        st.dataframe(rank_tbl, hide_index=True, use_container_width=True, height=360)
+        st.dataframe(rank_tbl, hide_index=True, width="stretch", height=360)
 
     st.pyplot(plot_score_hist(dealers, FOCUS_DEALER_ID,
                               title=ct("Dealer score distribution", "经销商综合分分布"),
@@ -1024,7 +1033,15 @@ with dealer_tab:
                                 f"{row.aging_90:.1%}", f"{row.service_retention:.1%}", f"{row.absorption:.0%}",
                                 f"{row.workshop_util:.0%}", f"{row.csi:.1f}"],
         })
-        st.dataframe(drill, hide_index=True, use_container_width=True)
+        st.dataframe(drill, hide_index=True, width="stretch")
+
+    st.pyplot(plot_score_contrib(
+        row, dealers,
+        sel_lbl=sel, avg_lbl=ct("Network avg", "全网均值"),
+        cats=[ct("Sales", "销售"), ct("After-sales", "售后"), ct("CX", "客户体验"), ct("Compliance", "合规")],
+        title=ct("Dealer Score contribution (weighted) vs network", "Dealer Score 加权构成 vs 全网")))
+    st.caption(t("Each segment is the weighted contribution (45/35/15/5). It's the Sales and After-sales segments where this dealer trails the network.",
+                 "每段是加权贡献（45/35/15/5）。该店主要在 Sales 与 After-sales 两段落后于全网。"))
 
     # automatic diagnosis
     issues_en, issues_zh = [], []
@@ -1056,10 +1073,50 @@ with cpo_tab:
     p_cols = st.columns(3)
     for col, (label, preset) in zip(p_cols, CAR_PRESETS.items()):
         with col:
-            if st.button(label, use_container_width=True):
+            if st.button(label, width="stretch"):
                 p_copy = dict(preset); p_copy.pop("intro", None)
                 st.session_state["preset_inputs"] = p_copy
                 st.rerun()
+
+    # Vehicle inputs live here (in the CPO tab), not in the sidebar
+    with st.expander(t("⚙️ Adjust vehicle inputs", "⚙️ 调整车辆输入"), expanded=False):
+        ic1, ic2, ic3 = st.columns(3)
+        with ic1:
+            brand = st.selectbox(t("Brand tier (0=budget, 15=luxury)", "品牌档次 (0=经济,15=豪华)"), BRAND_OPTIONS, index=6)
+            model = st.selectbox(t("Model code", "车型代码"), MODEL_OPTIONS, index=3)
+            body_type_map = BODY_TYPE_NAMES_ZH if lang == "中文" else BODY_TYPE_NAMES_EN
+            body_type = st.selectbox(t("Body type", "车身类型"), BODY_TYPE_OPTIONS,
+                                     format_func=lambda x: body_type_map.get(int(x), str(x)), index=2)
+        with ic2:
+            car_age_years = st.slider(t("Vehicle age (years)", "车龄（年）"), 0.5, 20.0, 5.0, 0.5)
+            kilometer = st.slider(t("Mileage (10k km)", "里程（万公里）"), 0.5, 15.0, 5.0, 0.5)
+            power = st.slider(t("Engine power (hp)", "发动机功率（马力）"), 50, 600, 160, 10)
+        with ic3:
+            fuel_type = st.selectbox(t("Fuel type", "燃料类型"), FUEL_TYPE_OPTIONS,
+                                     format_func=lambda x: t("Petrol / Diesel", "汽油 / 柴油") if x == 0 else t("EV / Hybrid", "纯电 / 混动"))
+            gearbox = st.selectbox(t("Gearbox", "变速箱"), GEARBOX_OPTIONS,
+                                   format_func=lambda x: t("Manual", "手动") if x == 0 else t("Automatic", "自动"))
+            not_repaired_damage = st.selectbox(t("Damage status", "损坏状态"), DAMAGE_OPTIONS,
+                                               format_func=lambda x: t("No unrepaired damage", "无未修复损坏") if x == 0 else t("Has unrepaired damage", "有未修复损坏"))
+            current_listing = st.number_input(t("Current listing price (CNY)", "当前挂牌价（元）"),
+                                              min_value=500, max_value=200_000, value=12_000, step=500)
+    inputs = dict(brand=brand, model=model, body_type=body_type, car_age_years=car_age_years,
+                  kilometer=kilometer, power=power, not_repaired_damage=not_repaired_damage,
+                  fuel_type=fuel_type, gearbox=gearbox, current_listing=current_listing)
+    if "preset_inputs" in st.session_state:
+        for k, v in st.session_state.pop("preset_inputs").items():
+            if k != "intro":
+                inputs[k] = v
+    fair_price = predict_fair_price_mock(int(inputs["brand"]), float(inputs["model"]),
+                                         float(inputs["car_age_years"]), float(inputs["kilometer"]),
+                                         float(inputs["power"]), float(inputs["fuel_type"]),
+                                         float(inputs["gearbox"]), float(inputs["body_type"]),
+                                         float(inputs["not_repaired_damage"]))
+    current_listing = float(inputs["current_listing"])
+    price_gap_pct = (current_listing - fair_price) / fair_price if fair_price > 0 else 0.0
+    status = pricing_status(price_gap_pct)
+    rec_price = recommended_listing_price(fair_price, status, current_listing)
+
     col1, col2, col3, col4 = st.columns(4)
     col1.metric(t("Fair value (model)", "公允价值（模型）"), f"CNY {fair_price:,.0f}")
     col2.metric(t("Current listing", "当前挂牌价"), f"CNY {current_listing:,.0f}")
@@ -1081,7 +1138,7 @@ with cpo_tab:
             t("Status", "状态"): [t("Overpriced", "高估"), t("Underpriced", "低估"), t("Fair Price", "公允")],
             t("Condition", "条件"): [f"> {THRESHOLD_PCT:.0%} {t('above fair','高于公允')}", f"> {THRESHOLD_PCT:.0%} {t('below fair','低于公允')}", f"{t('Within','在')} ±{THRESHOLD_PCT:.0%}"],
             t("Action", "操作"): [f"{t('fair ×','公允 ×')} {OVERPRICED_ADJ}", f"{t('fair ×','公允 ×')} {UNDERPRICED_ADJ}", t("Keep listing", "维持挂牌")],
-        }), hide_index=True, use_container_width=True)
+        }), hide_index=True, width="stretch")
         st.pyplot(plot_model_results(title=ct("Pricing model comparison — shared holdout", "定价模型比较 — 同一验证集"),
                                      xlab=ct("Validation MAE (CNY)", "验证集 MAE（元）")))
 
@@ -1112,6 +1169,16 @@ with cpo_tab:
                                                    "Transfer": ct("Transfer", "调拨"), "Raise": ct("Raise", "提价"),
                                                    "Hold": ct("Hold", "维持")}))
 
+    segs = [m for m in CPO_MODELS if m in cpo_inventory.model.values]
+    fresh = [int(((cpo_inventory.model == m) & (cpo_inventory.days_in_stock < 90)).sum()) for m in segs]
+    aged = [int(((cpo_inventory.model == m) & (cpo_inventory.days_in_stock >= 90)).sum()) for m in segs]
+    seg_lbl = [CPO_MODELS_ZH[m] if (lang == "中文" and CJK_OK) else m for m in segs]
+    st.pyplot(plot_inv_by_segment(seg_lbl, fresh, aged,
+                                  title=ct("CPO stock by segment — aged share", "CPO 库存按车型 — 老化占比"),
+                                  fresh_lbl=ct("< 90 days", "<90天"), aged_lbl=ct("90+ days", "90天+")))
+    st.caption(t("Executive Sedan is both the largest segment and the most aged — the clearest reprice target.",
+                 "行政轿车既是最大车型，老化也最严重 —— 最明确的调价目标。"))
+
     model_filter = st.multiselect(t("Filter by model", "按车型筛选"),
                                   [CPO_MODELS_ZH[m] if lang == "中文" else m for m in CPO_MODELS],
                                   default=[])
@@ -1133,7 +1200,7 @@ with cpo_tab:
         t("Sell prob 30d", "30天售出概率"): inv.sell_prob_30d.map(lambda x: f"{x:.0%}"),
         t("Action", "行动"): inv.action.map(lambda a: action_map[a]),
     })
-    st.dataframe(inv_disp, hide_index=True, use_container_width=True, height=380)
+    st.dataframe(inv_disp, hide_index=True, width="stretch", height=380)
 
     rep = (inv.action == "Reprice").sum(); pro = (inv.action == "Promote").sum()
     tr = (inv.action == "Transfer").sum()
@@ -1166,8 +1233,10 @@ with ai_tab:
     idx = qs.index(q)
 
     focus = dealers[dealers.dealer_id == FOCUS_DEALER_ID].iloc[0]
-    weak_region = dealers.groupby("region").apply(
-        lambda g: g.cpo_units.sum() / g.cpo_target.sum()).idxmin()
+    weak_region = (
+        dealers.groupby("region")["cpo_units"].sum()
+        / dealers.groupby("region")["cpo_target"].sum()
+    ).idxmin()
     aged = cpo_inventory[cpo_inventory.days_in_stock >= 90]
     answers_en = [
         f"DLR-E07 sits at rank {int(focus['rank'])}/50. Sales index is fine on NC ({focus.nc_achv:.0%}) but CPO achievement is only {focus.cpo_achv:.0%}, days-supply is {focus.days_supply:.0f} and 90+ aging is {focus.aging_90:.0%}. After-sales drags it further: retention {focus.service_retention:.0%} and CSI {focus.csi:.0f}. The composite weighting (45/35/15/5) turns those two gaps into a visible rank drop.",

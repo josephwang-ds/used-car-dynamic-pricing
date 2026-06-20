@@ -139,7 +139,7 @@ A validation MAE of **496.83 CNY** means the best model is typically within a fe
 
 ## Streamlit Demo
 
-The Streamlit app is a portfolio demo. It uses mock/rule-based pricing logic because the trained models and datasets are not included in the public repository.
+The Streamlit app is a bilingual portfolio demo that combines the original used-car pricing workflow with a synthetic premium-automotive retail management layer. It is designed as one decision loop: detect a network gap, locate the dealer and business line, diagnose the driver, and turn the finding into a CPO pricing or inventory action.
 
 Run locally:
 
@@ -152,11 +152,15 @@ streamlit run app/streamlit_app.py
 
 The app includes:
 
-- Overview tab with project metrics and workflow
-- Pricing Simulator tab with rule-based fair-price and recommendation logic
-- Model Results tab with validation metrics and feature-importance figures
-- Business Insights tab with pricing interpretation
-- Methodology tab with architecture and execution order
+- **Executive Overview:** five Sales and five After-sales headline KPIs, trend context, and the management storyline.
+- **Sales KPI:** NC, CPO, and Vans target achievement tracked separately, plus conversion, discount, model mix, and inventory diagnostics.
+- **After-sales KPI:** revenue, gross profit, repair orders, retention, workshop utilization, technician efficiency, quality, and customer experience.
+- **Dealer 360:** a synthetic 50-dealer network, transparent composite Dealer Score, ranking, and dealer-level root-cause drill-down.
+- **CPO Pricing & Inventory:** single-vehicle price simulation plus a dealer action list for repricing, promotion, and stock transfer.
+- **AI Narrative:** prebuilt management questions with evidence-linked bilingual answers.
+- **About & Method:** metric definitions, model results, architecture, limitations, and the synthetic-data disclosure.
+
+All dealer-network figures are deterministic synthetic data. The formulas and Dealer Score weights are proposed portfolio definitions rather than official former-employer definitions.
 
 ## Screenshots
 
@@ -164,11 +168,11 @@ Place Streamlit demo screenshots under `reports/screenshots/` after deployment.
 
 Suggested screenshots:
 
-- Overview tab
-- Pricing Simulator tab
-- Model Results tab
-- Business Insights tab
-- Methodology tab
+- Executive Overview
+- Sales KPI and After-sales KPI
+- Dealer 360 drill-down for `DLR-E07`
+- CPO Pricing & Inventory action list
+- Chinese-language view
 
 ## Setup for Full Notebook Workflow
 
@@ -210,6 +214,7 @@ The `.gitkeep` files preserve directory structure without exposing data artifact
 - Add optimized stacking or out-of-fold ensemble weights
 - Add scheduled retraining and monitoring pipeline
 - Add an API endpoint for batch pricing checks
+- Replace synthetic dealer facts with an authorized warehouse model and governed KPI dictionary
 
 ## License
 
