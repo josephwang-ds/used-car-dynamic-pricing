@@ -4,7 +4,7 @@ End-to-end data science project for used-car **dynamic pricing**: exploratory an
 
 The Streamlit app wraps this pricing model inside a **CPO Retail Command Center** — a single decision loop that connects the model to dealer-network analytics: a National Executive Overview, separate Sales and After-sales KPI systems, a 50-dealer Dealer 360 with a composite Dealer Score, and a CPO pricing & inventory action layer, with full English / 中文 switching.
 
-> The dealer network is **100% synthetic and deterministic**. No real company data, dealer names, customers, VINs, targets, or incentives are used. The dealer layer demonstrates a metric system and decision flow designed from premium automotive dealer-analytics experience; Dealer Score weights and KPI formulas are transparent portfolio assumptions, not company definitions. See the app's About tab.
+> The dealer network is **100% synthetic and deterministic**. No real Mercedes-Benz data, dealer names, customers, VINs, targets, or incentives are used. The dealer layer demonstrates the metric system and decision flow I designed from dealer-analytics experience; Dealer Score weights and KPI formulas are transparent portfolio assumptions, not company definitions. See the app's About tab and `interview_guide.md`.
 
 The public app is intentionally lightweight. Raw data, processed data, model artifacts, and prediction outputs are excluded from GitHub, so Streamlit uses a transparent rule-based simulator while the notebooks preserve the full machine-learning workflow.
 

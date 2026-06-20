@@ -1,0 +1,158 @@
+# Interview Guide: Used-Car Dynamic Pricing
+
+## Core Positioning
+
+This project is best positioned as a **product data science / pricing analytics** project, not just a modeling exercise. The strongest story is:
+
+1. I started from a real marketplace pricing problem.
+2. I built a reproducible notebook workflow.
+3. I compared multiple gradient boosting models fairly.
+4. I improved performance with an ensemble.
+5. I translated the prediction into pricing decisions.
+6. I deployed a public demo while keeping data and model artifacts private.
+
+## Opening Pitch
+
+I built a used-car dynamic pricing project to estimate fair market value and identify mispriced listings. The workflow uses 150K used-car listings, feature engineering around vehicle age, mileage, brand, model, and power, then benchmarks XGBoost, CatBoost, and LightGBM. The weighted ensemble achieved the best validation MAE at 496.83 CNY. The final layer converts the fair-price prediction into business actions: overpriced, underpriced, fair price, and recommended listing price. I also deployed a Streamlit demo so recruiters and interviewers can interact with the pricing logic.
+
+## Chinese Opening Pitch
+
+这个项目是一个二手车动态定价项目，目标是估算挂牌车辆的公允市场价，并识别高估或低估的挂牌。我用 15 万条二手车数据完成 EDA、特征工程、XGBoost/CatBoost/LightGBM 模型对比和加权集成，最佳验证集 MAE 是 496.83 元。最后我把预测结果转化成业务动作：公允价、高估/低估判断和推荐挂牌价，并部署了一个 Streamlit demo，方便面试官直接体验。
+
+## Best 30-Second Answer
+
+This is an end-to-end pricing analytics project. I used 150K used-car listings to build features like vehicle age, mileage intensity, power bins, and brand/model price aggregates. I benchmarked XGBoost, CatBoost, and LightGBM on the same validation split, then used a weighted ensemble that reached 496.83 CNY MAE. The important part is that I did not stop at prediction: I built a recommendation layer that flags overpriced and underpriced listings and suggests a listing price. The public app uses rule-based logic so it can run safely without publishing raw data or model files.
+
+## Best 2-Minute Answer
+
+The business problem is that sellers and marketplace operators need a consistent way to determine whether a used-car listing is fairly priced. I framed the project as supervised price prediction, then added a recommendation layer that makes the prediction usable.
+
+The workflow has seven notebooks. First, I explored the raw dataset: price distribution, missing values, outliers, brand/model distributions, and feature-price relationships. Then I engineered features such as car age, annualized mileage, power bins, date parts, brand-level price statistics, and model-level aggregates.
+
+For modeling, I benchmarked XGBoost, CatBoost, and LightGBM using the same holdout split so the results were comparable. CatBoost was the best single model at 501.67 CNY MAE, and the weighted ensemble improved the result to 496.83 CNY MAE.
+
+After modeling, I built a business recommendation layer. If the listing price is more than 10% above fair price, it is flagged as overpriced. If it is more than 10% below fair price, it is underpriced. Otherwise, it is considered fair. The Streamlit app demonstrates this logic with a rule-based simulator because the public repo intentionally excludes raw data, processed data, and trained model files.
+
+## STAR Story
+
+**Situation:** Used-car marketplaces need to price listings consistently, but pricing depends on many factors such as brand, model, age, mileage, power, and vehicle condition.
+
+**Task:** Build a reproducible workflow that estimates fair value and translates that estimate into practical pricing actions.
+
+**Action:** I cleaned and explored 150K listings, engineered pricing-relevant features, benchmarked XGBoost, CatBoost, and LightGBM, created a weighted ensemble, and built a Streamlit app that demonstrates the pricing recommendation workflow.
+
+**Result:** The weighted ensemble achieved **496.83 CNY validation MAE**, outperforming the individual models. The final app turns predictions into business actions: fair-price estimate, overpricing/underpricing status, and recommended listing price.
+
+## Likely Interview Questions and Answers
+
+### 1. Why did you choose MAE?
+
+MAE is easy to interpret in the business unit of the target, which is CNY. If the MAE is 496.83, I can explain that the model is off by about 497 yuan on average. For pricing recommendations, that is more intuitive than RMSE. RMSE could also be useful if large pricing errors are especially costly, but MAE is a good primary metric for fair-price estimation.
+
+### 2. Why use XGBoost, CatBoost, and LightGBM?
+
+They are strong baseline models for tabular data. XGBoost is a reliable gradient boosting baseline, CatBoost handles categorical structure well, and LightGBM is fast and often strong on large tabular datasets. Comparing all three on the same validation split gave me a fair benchmark.
+
+### 3. Why did the ensemble improve performance?
+
+The models make different errors because they learn splits and categorical patterns differently. A weighted ensemble can reduce variance and smooth individual model weaknesses. In this case, CatBoost was the best single model, but the weighted blend improved MAE from 501.67 to 496.83.
+
+### 4. How did you avoid data leakage?
+
+The important rule is that aggregate features such as brand-level or model-level price statistics should be computed from training data and then applied to validation data, rather than using the whole dataset before splitting. In a production version, I would wrap those transformations into a pipeline or fit/transform structure to enforce that separation.
+
+### 5. Why is the Streamlit app rule-based instead of loading the trained model?
+
+The public GitHub repo intentionally excludes raw data, processed data, and model artifacts. That keeps the repo safe, lightweight, and deployable. The notebooks document the real ML workflow and validation results, while the Streamlit app demonstrates the business logic in a transparent way.
+
+### 6. What features mattered most?
+
+The strongest feature groups are generally vehicle age, mileage, power, brand/model signals, and aggregate price statistics. The project includes XGBoost, CatBoost, and LightGBM feature-importance figures. For production explainability, I would add SHAP so each individual listing can show why the recommended price moved up or down.
+
+### 7. How would you productionize it?
+
+I would separate the project into data ingestion, feature pipeline, model training, model registry, batch or API inference, monitoring, and business rule layers. I would also add drift monitoring, periodic retraining, access control, and threshold calibration based on business outcomes such as conversion rate, time-to-sale, and gross margin.
+
+### 8. How would you evaluate business impact?
+
+Offline MAE is only the first step. Business impact should be measured by A/B testing pricing recommendations against metrics like listing conversion rate, time-to-sale, seller acceptance rate, buyer inquiry rate, and gross margin. I would also monitor whether recommendations create unwanted bias across vehicle segments.
+
+### 9. What would you improve if you had more time?
+
+I would add SHAP explanations, tune ensemble weights more systematically, add regional and seasonal market features, include supply-demand signals, and evaluate recommendation thresholds through experiments rather than fixed rules.
+
+### 10. What was the hardest part?
+
+The key challenge was turning a predictive model into a decision workflow. A price prediction alone is not enough. The useful part is defining a pricing band, classifying listings as over/under/fair, and explaining the recommendation in a way a seller or marketplace operator can act on.
+
+## Questions to Ask the Interviewer
+
+- How does your team currently measure pricing quality or pricing recommendation success?
+- Do pricing models feed directly into user-facing recommendations, or are they used as internal decision support?
+- How do you balance conversion, margin, seller experience, and marketplace fairness?
+- What monitoring exists for model drift or changing market conditions?
+- Are pricing experiments evaluated by A/B tests, quasi-experiments, or offline simulations?
+
+## Role-Specific Framing
+
+### Product Data Scientist
+
+Emphasize the recommendation layer, pricing status thresholds, business metrics, A/B testing, and user-facing decision support.
+
+### Senior Data Analyst
+
+Emphasize EDA, feature engineering, metric interpretation, validation design, dashboard/app communication, and business translation.
+
+### Pricing Analyst / Pricing Data Scientist
+
+Emphasize fair market value, pricing bands, overpricing/underpricing flags, margin/conversion trade-offs, and threshold calibration.
+
+### Machine Learning Engineer
+
+Emphasize pipeline separation, leakage prevention, model registry, inference boundary, monitoring, retraining, and reproducibility.
+
+## Common Pitfalls to Avoid
+
+- Do not oversell the Streamlit demo as live model inference.
+- Do not claim production readiness; frame it as portfolio-ready and production-extensible.
+- Do not focus only on MAE; always connect the result to business decisions.
+- Do not ignore data leakage risks around aggregate features.
+- Do not say the model replaces pricing managers; say it supports pricing review.
+
+## Closing Line
+
+The project shows both sides of data science: the modeling workflow and the business translation. I can train a model, evaluate it properly, and then turn the result into a decision-support tool that people can actually understand and use.
+
+---
+
+# CPO Retail Command Center — Mercedes-Benz Framing
+
+The Streamlit demo now wraps the pricing model inside a full **CPO Retail Command Center**: a National Executive Overview, separate Sales and After-sales KPI systems, a 50-dealer Dealer 360 with a composite Dealer Score, and the CPO pricing & inventory action layer. This section is for explaining *why* it is designed that way, grounded in dealer-analytics experience.
+
+> Compliance note: the dealer network is 100% synthetic. Use no real Mercedes-Benz data, dealer names, customers, VINs, targets, or incentive values in any interview. Frame everything as "this is how I would design it, based on the kind of dealer analytics I worked on."
+
+## "What I did → so I designed it this way" (English)
+
+- **I built KPI dashboards for 50+ dealers nationally**, so the demo opens with an Executive Overview of the 10 metrics management watches first — five Sales, five After-sales — with monthly trends and an alert that surfaces the one dealer slipping in the ranking.
+- **I ran Sales and After-sales operating analysis**, so I split them into two separate KPI systems. Sales tracks NC, CPO, and Vans achievement *separately* — different targets, mix, and inventory logic mean you never sum them before comparing. After-sales only shows metrics that can change a dealer's action: absorption, workshop utilization, technician efficiency, retention, first-time fix, CSI.
+- **I worked on pricing and inventory analysis**, so the used-car ML model becomes the action layer: it scores each CPO vehicle, and aged or overpriced stock turns into reprice / promote / transfer recommendations with a 30-day sell-probability and margin-at-risk view.
+- **I cared about overall dealer health**, so I designed a transparent Dealer Score — 45% Sales, 35% After-sales, 15% Customer Experience, 5% Compliance — that ranks dealers but always lets you drill into the raw KPIs to see *why* a dealer dropped.
+
+## "我在奔驰做过什么 → 所以这样设计" (中文)
+
+- **做过全国 50+ 经销商 KPI 看板** → demo 首屏就是全国总览,放管理层最先看的 10 个指标(5 个 Sales、5 个 After-sales),加月度趋势和"某经销商排名下滑"的预警。
+- **做过 Sales 与 After-sales 经营分析** → 把两者拆成各自的 KPI 体系。Sales 把 NC / CPO / Vans 的目标达成率*分别*计算 —— 目标、车型结构、库存逻辑都不同,不能相加后比较。After-sales 只放能改变门店动作的指标:吸收率、工位利用率、技师效率、回厂率、一次修复率、满意度。
+- **做过定价与库存分析** → 二手车 ML 模型成为行动层:为每辆 CPO 车打分,把老化、定价偏高的库存转化为调价 / 促销 / 跨店调拨建议,并给出 30 天售出概率和风险毛利。
+- **关注经销商综合健康度** → 设计了透明的 Dealer Score(45% Sales + 35% After-sales + 15% 客户体验 + 5% 合规),用于排名,但始终能下钻到原始 KPI,解释经销商*为什么*掉队。
+
+## The Demo Storyline (90 seconds)
+
+"National sales achievement looks healthy — about 100%. But on the Executive Overview, an alert shows dealer **MB-E07** has dropped to the bottom of the 50-dealer ranking. I drill in: NC sales are fine, but **CPO achievement is only 78%**, days-supply and 90-plus-day aging are high. On the After-sales tab the same dealer trails on **retention (61%) and CSI**. Dealer 360 confirms the root cause with the composite score and a radar of the four indices. Finally the CPO tab shows **29 E-Class units stuck 90-plus days, overpriced versus the model's fair value** — so the action list recommends repricing those first, promoting the rest, and transferring slow movers, plus a service package to win back retention. That's the whole loop: national monitoring → dealer diagnosis → single-car pricing action."
+
+中文版:"全国销量达成约 100%,看起来健康。但全国总览的预警显示 **MB-E07** 跌到 50 家经销商排名末位。下钻发现:NC 正常,但 **CPO 达成仅 78%**,库存天数和 90 天以上库存率偏高;After-sales 页该店 **回厂率 61%、满意度偏低**。Dealer 360 用综合分和四维雷达确认根因。最后 CPO 页显示 **29 辆 E 级库存超 90 天且定价高于模型公允价** —— 行动清单建议先调价、其余促销、滞销跨店调拨,再配保养套餐挽回回厂率。这就是完整闭环:全国监控 → 经销商诊断 → 单车定价行动。"
+
+## Anticipated Questions
+
+- **"Is this real Mercedes data?"** No. Everything in the dealer network is synthetic and deterministic. I designed the metric system and decision flow from the kind of dealer analytics I worked on; the numbers, names, and formulas are transparent portfolio assumptions, not company definitions.
+- **"Why a composite Dealer Score instead of raw KPIs?"** The score is for ranking and triage across 50 dealers; the raw indices and KPI drill-down are always one click away so the score never hides the cause.
+- **"Why is Service Absorption flagged?"** It needs a credible fixed-operating-cost field. It is synthetic here; in a real deployment I would only show it once that expense data is trustworthy, rather than fabricating a number for the sake of looking complete.

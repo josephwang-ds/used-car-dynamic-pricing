@@ -4,10 +4,10 @@ These tables power the **CPO Retail Command Center** demo. They are produced by
 `scripts/generate_dealer_network.py` (seed `2026`) and match exactly what the
 Streamlit app renders.
 
-> ⚠️ **100% synthetic.** No real company data, dealer names, customers, VINs,
-> targets, or incentives are used. Values, segment labels (Compact / Mid / Executive /
-> Luxury Sedan, SUVs, Electric Sedan), KPI formulas, and the Dealer Score weights are
-> transparent portfolio assumptions, not company definitions. For demonstration only.
+> ⚠️ **100% synthetic.** No real Mercedes-Benz data, dealer names, customers, VINs,
+> targets, or incentives are used. Values, model names (A/C/E/S-Class, etc.), KPI
+> formulas, and the Dealer Score weights are transparent portfolio assumptions, not
+> company definitions. For demonstration only.
 
 Regenerate with:
 
@@ -19,8 +19,8 @@ python scripts/generate_dealer_network.py
 
 ## `dealers.csv` — 50 dealers × 43 columns
 
-One row per dealer (5 regions × 10 dealers). `dealer_id` format `DLR-<RegionInitial><nn>`
-(e.g. `DLR-E07`). `DLR-E07` is the engineered "problem dealer" in the demo storyline.
+One row per dealer (5 regions × 10 dealers). `dealer_id` format `MB-<RegionInitial><nn>`
+(e.g. `MB-E07`). `MB-E07` is the engineered "problem dealer" in the demo storyline.
 
 | Column | Meaning |
 |---|---|
@@ -68,13 +68,13 @@ National monthly trend (seasonality + noise) for the Executive Overview charts.
 
 ## `cpo_inventory.csv` — 140 vehicles × 12 columns
 
-CPO stock for the focus dealer `DLR-E07`. Executive Sedan is deliberately overstocked and
+CPO stock for the focus dealer `MB-E07`. E-Class is deliberately overstocked and
 overpriced in the 90+ day band — the action layer of the demo.
 
 | Column | Meaning |
 |---|---|
 | `dealer_id`, `vehicle_id` | Owning dealer and masked vehicle code |
-| `model` | CPO segment (Compact / Mid / Executive / Luxury Sedan, Compact / Mid / Large SUV, Electric Sedan) |
+| `model` | CPO model (A/C/E/S-Class, GLA, GLC, GLE, EQE) |
 | `age_years`, `kilometer` | Vehicle age (years) and mileage (10k km) |
 | `days_in_stock` | Days on lot |
 | `current_price`, `fair_price` | Listed price vs model fair value (CNY) |

@@ -82,7 +82,7 @@ The public app uses a transparent rule-based simulator that mirrors the final re
 
 ## 7. Demo storyline (use this when presenting)
 
-National sales achievement looks healthy (~100%), but an alert flags dealer **DLR-E07** at the bottom of the 50-dealer ranking. Drilling in: new-car sales are fine, but **CPO achievement is only 78%**, with high days-supply and 90+ day aging. After-sales tells the same story — **retention 61%, CSI low**. Dealer 360 confirms the root cause via the composite score and radar. Finally, the CPO tab shows **29 Executive Sedan units stuck 90+ days, overpriced vs. the model's fair value**, and recommends repricing those first, promoting the rest, transferring slow movers, and bundling a service package to win back retention. One loop: national monitoring → dealer diagnosis → single-car pricing action.
+National sales achievement looks healthy (~100%), but an alert flags dealer **MB-E07** at the bottom of the 50-dealer ranking. Drilling in: new-car sales are fine, but **CPO achievement is only 78%**, with high days-supply and 90+ day aging. After-sales tells the same story — **retention 61%, CSI low**. Dealer 360 confirms the root cause via the composite score and radar. Finally, the CPO tab shows **29 E-Class units stuck 90+ days, overpriced vs. the model's fair value**, and recommends repricing those first, promoting the rest, transferring slow movers, and bundling a service package to win back retention. One loop: national monitoring → dealer diagnosis → single-car pricing action.
 
 ---
 
@@ -128,4 +128,4 @@ I wrapped that model in a **CPO Retail Command Center**: a bilingual Streamlit a
 
 ## 11. Caveat / compliance note (keep this honest)
 
-The dealer network is **100% synthetic and deterministic**. No real company data, dealer names, customers, VINs, targets, or incentives are used. The dealer layer demonstrates a metric system and decision flow designed from premium automotive dealer-analytics experience; the Dealer Score weights, model mix, and KPI formulas are transparent portfolio assumptions, not company definitions. Segment labels (Executive Sedan, SUVs, etc.) are illustrative. The single-vehicle pricing model is trained on a public used-car dataset.
+The dealer network is **100% synthetic and deterministic**. No real Mercedes-Benz data, dealer names, customers, VINs, targets, or incentives are used. The dealer layer demonstrates a metric system and decision flow designed from dealer-analytics experience; the Dealer Score weights, model mix, and KPI formulas are transparent portfolio assumptions, not company definitions. The single-vehicle pricing model is trained on a public used-car dataset.

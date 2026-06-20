@@ -1,9 +1,9 @@
-"""Streamlit portfolio demo — Premium Auto CPO Retail Command Center.
+"""Streamlit portfolio demo — Mercedes-style CPO Retail Command Center.
 
 A single decision-loop product: National Executive Overview → Sales / After-sales
 KPI systems → Dealer 360 diagnosis → CPO Pricing & Inventory action layer (wrapping
 the used-car dynamic-pricing ML model). All dealer-network figures are synthetic and
-deterministic. No real company data, dealer names, customers, VINs, targets, or
+deterministic. No real Mercedes-Benz data, dealer names, customers, VINs, targets, or
 incentives are used. See the About tab for the evidence boundary.
 """
 from __future__ import annotations
@@ -119,22 +119,22 @@ MODEL_RESULTS = pd.DataFrame({
 REGIONS = ["North", "East", "South", "West", "Central"]
 REGIONS_ZH = {"North": "华北", "East": "华东", "South": "华南", "West": "西部", "Central": "华中"}
 DEALERS_PER_REGION = 10
-FOCUS_DEALER_ID = "DLR-E07"        # the dealer that drops in ranking (demo story)
-CPO_MODELS = ["Compact Sedan", "Mid Sedan", "Executive Sedan", "Luxury Sedan", "Compact SUV", "Mid SUV", "Large SUV", "Electric Sedan"]
+FOCUS_DEALER_ID = "MB-E07"        # the dealer that drops in ranking (demo story)
+CPO_MODELS = ["A-Class", "C-Class", "E-Class", "S-Class", "GLA", "GLC", "GLE", "EQE"]
 CPO_MODELS_ZH = {
-    "Compact Sedan": "紧凑轿车", "Mid Sedan": "中型轿车", "Executive Sedan": "行政轿车", "Luxury Sedan": "豪华轿车",
-    "Compact SUV": "紧凑SUV", "Mid SUV": "中型SUV", "Large SUV": "大型SUV", "Electric Sedan": "纯电轿车",
+    "A-Class": "A 级", "C-Class": "C 级", "E-Class": "E 级", "S-Class": "S 级",
+    "GLA": "GLA", "GLC": "GLC", "GLE": "GLE", "EQE": "EQE",
 }
 
 
 @st.cache_data(show_spinner=False)
 def generate_dealer_network() -> Dict[str, pd.DataFrame]:
-    """Deterministic synthetic premium-auto dealer network (illustrative only)."""
+    """Deterministic synthetic Mercedes-style dealer network (illustrative only)."""
     rng = np.random.default_rng(2026)
     rows = []
     for r_i, region in enumerate(REGIONS):
         for d in range(DEALERS_PER_REGION):
-            did = f"DLR-{region[0]}{d + 1:02d}"
+            did = f"MB-{region[0]}{d + 1:02d}"
             focus = did == FOCUS_DEALER_ID
 
             # ── Sales targets & achievement (NC / CPO / Vans tracked separately) ──
@@ -254,23 +254,23 @@ def generate_dealer_network() -> Dict[str, pd.DataFrame]:
         ))
     monthly = pd.DataFrame(m_rows)
 
-    # ── CPO inventory for the focus dealer (Executive Sedan overstocked & overpriced) ──
+    # ── CPO inventory for the focus dealer (E-Class overstocked & overpriced) ──
     inv_rng = np.random.default_rng(77)
-    base_value = {"Compact Sedan": 195_000, "Mid Sedan": 285_000, "Executive Sedan": 405_000,
-                  "Luxury Sedan": 720_000, "Compact SUV": 235_000, "Mid SUV": 345_000,
-                  "Large SUV": 525_000, "Electric Sedan": 480_000}
-    weights = np.array([0.08, 0.16, 0.34, 0.05, 0.10, 0.14, 0.08, 0.05])  # Executive Sedan heavy
+    base_value = {"A-Class": 195_000, "C-Class": 285_000, "E-Class": 405_000,
+                  "S-Class": 720_000, "GLA": 235_000, "GLC": 345_000,
+                  "GLE": 525_000, "EQE": 480_000}
+    weights = np.array([0.08, 0.16, 0.34, 0.05, 0.10, 0.14, 0.08, 0.05])  # E-Class heavy
     inv = []
     for i in range(140):
         model = inv_rng.choice(CPO_MODELS, p=weights)
         age = float(np.clip(inv_rng.normal(3.2, 1.1), 0.8, 7))
         km = float(np.clip(inv_rng.normal(5.5, 2.2), 0.8, 14))      # 10k km
-        # Executive Sedan skews older stock; everything else fresher
-        days_in_stock = int(np.clip(inv_rng.normal(95 if model == "Executive Sedan" else 46, 28), 5, 190))
+        # E-Class skews older stock; everything else fresher
+        days_in_stock = int(np.clip(inv_rng.normal(95 if model == "E-Class" else 46, 28), 5, 190))
         fair = base_value[model] * max(0.5, 1 - 0.09 * age) * max(0.7, 1 - 0.012 * km)
         fair *= inv_rng.normal(1.0, 0.03)
-        # overpricing concentrated in aged Executive Sedan
-        if model == "Executive Sedan" and days_in_stock >= 75:
+        # overpricing concentrated in aged E-Class
+        if model == "E-Class" and days_in_stock >= 75:
             gap = float(inv_rng.normal(0.14, 0.04))
         else:
             gap = float(inv_rng.normal(0.02, 0.07))
@@ -569,20 +569,20 @@ st.caption(t("National executive overview · Sales & After-sales KPI · 50-deale
 if lang == "中文":
     st.markdown("""<div class="story-box">
 <b>📊 产品故事：</b>从全国经营监控，到经销商诊断，再到单车定价行动，构成一个闭环。<br><br>
-本作品集把<b>高端汽车经销商分析经验</b>与公开二手车定价模型整合为一个产品：
+本作品集把<b>奔驰式经销商分析经验</b>与公开二手车定价模型整合为一个产品：
 全国总览发现异常 → Dealer 360 解释 Sales / After-sales 经营差距 →
 CPO 定价库存层把洞察落到单车调价、促销和跨店调拨。<br><br>
-<b>演示故事线：</b>全国销量达成正常，但 <b>DLR-E07</b> 综合排名下滑——CPO 未达标、客户回厂率偏低，
-其行政轿车 90 天以上库存过多且定价偏高。点开各 Tab 跟随这条线索。
+<b>演示故事线：</b>全国销量达成正常，但 <b>MB-E07</b> 综合排名下滑——CPO 未达标、客户回厂率偏低，
+其 E 级 90 天以上库存过多且定价偏高。点开各 Tab 跟随这条线索。
 </div>""", unsafe_allow_html=True)
 else:
     st.markdown("""<div class="story-box">
 <b>📊 The product story:</b> one loop from national monitoring → dealer diagnosis → single-vehicle pricing action.<br><br>
-This portfolio piece integrates <b>premium automotive dealer-analytics experience</b> with a public used-car
+This portfolio piece integrates <b>Mercedes-style dealer-analytics experience</b> with a public used-car
 pricing model into a single product: the national overview finds the anomaly → Dealer 360 explains the
 Sales / After-sales gap → the CPO pricing & inventory layer turns insight into per-car reprice, promote, or transfer.<br><br>
-<b>Demo storyline:</b> national sales achievement is on track, yet <b>DLR-E07</b> slips in the ranking — CPO target missed,
-service retention low, and its Executive Sedan 90+ day stock is overpriced. Follow that thread across the tabs.
+<b>Demo storyline:</b> national sales achievement is on track, yet <b>MB-E07</b> slips in the ranking — CPO target missed,
+service retention low, and its E-Class 90+ day stock is overpriced. Follow that thread across the tabs.
 </div>""", unsafe_allow_html=True)
 
 
@@ -618,7 +618,7 @@ with exec_tab:
     a4.metric(t("Service Retention", "客户回厂率"), f"{nat['retention']:.1%}")
     a5.metric(t("Service Absorption", "吸收率"), f"{nat['absorption']:.0%}")
 
-    st.markdown(f'<div class="alert-box">⚠️ {t("Alert: national sales on track, but dealer <b>DLR-E07</b> dropped to rank "+str(int(dealers.loc[dealers.dealer_id==FOCUS_DEALER_ID,"rank"].iloc[0]))+" of 50. Drill into Sales → After-sales → Dealer 360 → CPO to see why.","预警：全国销量达成正常，但经销商 <b>DLR-E07</b> 综合排名跌至第 "+str(int(dealers.loc[dealers.dealer_id==FOCUS_DEALER_ID,"rank"].iloc[0]))+"/50。沿 Sales → After-sales → Dealer 360 → CPO 下钻查看原因。")}</div>',
+    st.markdown(f'<div class="alert-box">⚠️ {t("Alert: national sales on track, but dealer <b>MB-E07</b> dropped to rank "+str(int(dealers.loc[dealers.dealer_id==FOCUS_DEALER_ID,"rank"].iloc[0]))+" of 50. Drill into Sales → After-sales → Dealer 360 → CPO to see why.","预警：全国销量达成正常，但经销商 <b>MB-E07</b> 综合排名跌至第 "+str(int(dealers.loc[dealers.dealer_id==FOCUS_DEALER_ID,"rank"].iloc[0]))+"/50。沿 Sales → After-sales → Dealer 360 → CPO 下钻查看原因。")}</div>',
                 unsafe_allow_html=True)
 
     st.divider()
@@ -693,7 +693,7 @@ with sales_tab:
         t("90+ Aging", "90天+库存"): reg["aging_90"].map(lambda x: f"{x:.1%}"),
     })
     st.dataframe(reg_disp, hide_index=True, use_container_width=True)
-    st.markdown(f'<div class="callout">{t("Design principle: NC / CPO / Vans achievement are computed separately, never summed before comparison. East region carries the CPO shortfall driven by DLR-E07.","设计原则：NC / CPO / Vans 达成率分别计算，不简单相加后比较。华东区的 CPO 缺口主要来自 DLR-E07。")}</div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="callout">{t("Design principle: NC / CPO / Vans achievement are computed separately, never summed before comparison. East region carries the CPO shortfall driven by MB-E07.","设计原则：NC / CPO / Vans 达成率分别计算，不简单相加后比较。华东区的 CPO 缺口主要来自 MB-E07。")}</div>', unsafe_allow_html=True)
 
 
 # ═══════════════════════════ TAB 3 — AFTER-SALES KPI ═════════════════════════
@@ -748,7 +748,7 @@ with aftersales_tab:
         t("CSI", "满意度"): reg["csi"].map(lambda x: f"{x:.1f}"),
     })
     st.dataframe(reg_disp, hide_index=True, use_container_width=True)
-    st.markdown(f'<div class="callout">{t("East region trails on retention and CSI — the same DLR-E07 weakness that shows up in Dealer 360 and feeds the CPO action list.","华东区在回厂率与满意度上落后 —— 与 Dealer 360 中 DLR-E07 的短板一致，并最终汇入 CPO 行动清单。")}</div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="callout">{t("East region trails on retention and CSI — the same MB-E07 weakness that shows up in Dealer 360 and feeds the CPO action list.","华东区在回厂率与满意度上落后 —— 与 Dealer 360 中 MB-E07 的短板一致，并最终汇入 CPO 行动清单。")}</div>', unsafe_allow_html=True)
 
 
 # ════════════════════════════ TAB 4 — DEALER 360 ═════════════════════════════
@@ -866,12 +866,12 @@ with cpo_tab:
     # ── B) Dealer CPO inventory action list (focus dealer) ──
     st.markdown(f"#### {t('B. CPO inventory & repricing actions','B. CPO 库存与调价行动')} — {FOCUS_DEALER_ID}")
     aged = cpo_inventory[cpo_inventory.days_in_stock >= 90]
-    eclass_aged = aged[aged.model == "Executive Sedan"]
+    eclass_aged = aged[aged.model == "E-Class"]
     margin_at_risk = float((aged[aged.gap_pct > 0.08].current_price * 0.05).sum())
     k = st.columns(4)
     k[0].metric(t("Total CPO units", "CPO 在库总数"), f"{len(cpo_inventory)}")
     k[1].metric(t("Units 90+ days", "90天+库存"), f"{len(aged)}", f"{len(aged)/len(cpo_inventory):.0%}")
-    k[2].metric(t("Executive Sedan 90+ days", "行政轿车 90天+"), f"{len(eclass_aged)}")
+    k[2].metric(t("E-Class 90+ days", "E级 90天+"), f"{len(eclass_aged)}")
     k[3].metric(t("Est. margin at risk", "预计风险毛利"), f"CNY {margin_at_risk/1e6:,.2f}M")
 
     model_filter = st.multiselect(t("Filter by model", "按车型筛选"),
@@ -899,10 +899,10 @@ with cpo_tab:
 
     rep = (inv.action == "Reprice").sum(); pro = (inv.action == "Promote").sum()
     tr = (inv.action == "Transfer").sum()
-    st.markdown(f'<div class="story-box">{t("Combined action plan for DLR-E07","DLR-E07 组合行动建议")}: '
+    st.markdown(f'<div class="story-box">{t("Combined action plan for MB-E07","MB-E07 组合行动建议")}: '
                 f'<b>{rep}</b> {t("vehicles to reprice","辆调价")}, <b>{pro}</b> {t("to promote","辆促销")}, '
                 f'<b>{tr}</b> {t("to transfer cross-store","辆跨店调拨")}. '
-                f'{t("Executive Sedan 90+ day stock is the largest overpriced cluster — reprice first, then bundle a service package to lift retention.","行政轿车 90 天以上库存是最大的高估集群 —— 先调价，再配合保养套餐提升回厂率。")}</div>',
+                f'{t("E-Class 90+ day stock is the largest overpriced cluster — reprice first, then bundle a service package to lift retention.","E 级 90 天以上库存是最大的高估集群 —— 先调价，再配合保养套餐提升回厂率。")}</div>',
                 unsafe_allow_html=True)
 
 
@@ -912,13 +912,13 @@ with ai_tab:
     st.caption(t("Ask a business question in natural language; the assistant answers from the synthetic KPI layer.",
                  "用自然语言提问；助手基于合成 KPI 层回答。"))
     questions_en = [
-        "Why did DLR-E07 drop in the ranking?",
+        "Why did MB-E07 drop in the ranking?",
         "Which region has the weakest CPO achievement?",
         "What is the biggest after-sales risk right now?",
         "What action should we take on aged CPO inventory?",
     ]
     questions_zh = [
-        "DLR-E07 为什么排名下滑？",
+        "MB-E07 为什么排名下滑？",
         "哪个区域 CPO 达成最弱？",
         "当前最大的售后风险是什么？",
         "老化的 CPO 库存应该采取什么行动？",
@@ -932,16 +932,16 @@ with ai_tab:
         lambda g: g.cpo_units.sum() / g.cpo_target.sum()).idxmin()
     aged = cpo_inventory[cpo_inventory.days_in_stock >= 90]
     answers_en = [
-        f"DLR-E07 sits at rank {int(focus['rank'])}/50. Sales index is fine on NC ({focus.nc_achv:.0%}) but CPO achievement is only {focus.cpo_achv:.0%}, days-supply is {focus.days_supply:.0f} and 90+ aging is {focus.aging_90:.0%}. After-sales drags it further: retention {focus.service_retention:.0%} and CSI {focus.csi:.0f}. The composite weighting (45/35/15/5) turns those two gaps into a visible rank drop.",
-        f"The {weak_region} region has the lowest CPO achievement, pulled down by DLR-E07's {focus.cpo_achv:.0%}. NC and Vans are on track there, which is why the national number still looks healthy.",
-        f"Service retention and CSI at DLR-E07 ({focus.service_retention:.0%} / {focus.csi:.0f}) are the clearest after-sales risk. Customers who bought there are not coming back for service, which compounds the CPO inventory problem.",
-        f"{len(aged)} CPO units are 90+ days in stock, concentrated in Executive Sedan. Reprice the overpriced ones toward model fair value, promote the rest, and transfer slow movers to higher-demand stores. Estimated margin at risk is meaningful but recoverable with early action.",
+        f"MB-E07 sits at rank {int(focus['rank'])}/50. Sales index is fine on NC ({focus.nc_achv:.0%}) but CPO achievement is only {focus.cpo_achv:.0%}, days-supply is {focus.days_supply:.0f} and 90+ aging is {focus.aging_90:.0%}. After-sales drags it further: retention {focus.service_retention:.0%} and CSI {focus.csi:.0f}. The composite weighting (45/35/15/5) turns those two gaps into a visible rank drop.",
+        f"The {weak_region} region has the lowest CPO achievement, pulled down by MB-E07's {focus.cpo_achv:.0%}. NC and Vans are on track there, which is why the national number still looks healthy.",
+        f"Service retention and CSI at MB-E07 ({focus.service_retention:.0%} / {focus.csi:.0f}) are the clearest after-sales risk. Customers who bought there are not coming back for service, which compounds the CPO inventory problem.",
+        f"{len(aged)} CPO units are 90+ days in stock, concentrated in E-Class. Reprice the overpriced ones toward model fair value, promote the rest, and transfer slow movers to higher-demand stores. Estimated margin at risk is meaningful but recoverable with early action.",
     ]
     answers_zh = [
-        f"DLR-E07 排名第 {int(focus['rank'])}/50。NC 达成正常（{focus.nc_achv:.0%}），但 CPO 仅 {focus.cpo_achv:.0%}，库存天数 {focus.days_supply:.0f}，90 天以上库存率 {focus.aging_90:.0%}。售后进一步拖累：回厂率 {focus.service_retention:.0%}、满意度 {focus.csi:.0f}。在 45/35/15/5 的综合权重下，这两个缺口直接拉低了综合排名。",
-        f"{REGIONS_ZH.get(weak_region, weak_region)}区 CPO 达成最弱，主要被 DLR-E07 的 {focus.cpo_achv:.0%} 拉低。该区 NC 与 Vans 正常，所以全国数字看起来仍健康。",
-        f"DLR-E07 的回厂率与满意度（{focus.service_retention:.0%} / {focus.csi:.0f}）是最明确的售后风险。在该店购车的客户没有回厂保养，这又加剧了 CPO 库存问题。",
-        f"共有 {len(aged)} 辆 CPO 车在库超过 90 天，集中在行政轿车。把定价偏高的调向模型公允价、其余促销、滞销车跨店调拨到高需求门店。预计风险毛利可观，但及早行动可挽回。",
+        f"MB-E07 排名第 {int(focus['rank'])}/50。NC 达成正常（{focus.nc_achv:.0%}），但 CPO 仅 {focus.cpo_achv:.0%}，库存天数 {focus.days_supply:.0f}，90 天以上库存率 {focus.aging_90:.0%}。售后进一步拖累：回厂率 {focus.service_retention:.0%}、满意度 {focus.csi:.0f}。在 45/35/15/5 的综合权重下，这两个缺口直接拉低了综合排名。",
+        f"{REGIONS_ZH.get(weak_region, weak_region)}区 CPO 达成最弱，主要被 MB-E07 的 {focus.cpo_achv:.0%} 拉低。该区 NC 与 Vans 正常，所以全国数字看起来仍健康。",
+        f"MB-E07 的回厂率与满意度（{focus.service_retention:.0%} / {focus.csi:.0f}）是最明确的售后风险。在该店购车的客户没有回厂保养，这又加剧了 CPO 库存问题。",
+        f"共有 {len(aged)} 辆 CPO 车在库超过 90 天，集中在 E 级。把定价偏高的调向模型公允价、其余促销、滞销车跨店调拨到高需求门店。预计风险毛利可观，但及早行动可挽回。",
     ]
     ans = (answers_zh if lang == "中文" else answers_en)[idx]
     st.markdown(f'<div class="story-box">🤖 {ans}</div>', unsafe_allow_html=True)
@@ -954,9 +954,9 @@ with about_tab:
     st.subheader(t("About this demo", "关于本演示"))
     if lang == "中文":
         st.markdown("""<div class="callout">
-<b>这是什么：</b>一个作品集产品，把我在<b>高端汽车经销商数据分析</b>中的经验，
+<b>这是什么：</b>一个作品集产品，把我在<b>奔驰（梅赛德斯-奔驰）经销商数据分析</b>中的经验，
 与一个公开数据集上的二手车动态定价模型，整合成一个完整的零售经营决策系统。<br><br>
-<b>我在经销商分析中做过什么 → 所以这样设计：</b><br>
+<b>我在奔驰做过什么 → 所以这样设计：</b><br>
 • 做过全国 50+ 经销商 KPI 看板 → 这里用<b>全国总览 + 10 个首屏指标</b>再现管理层视角；<br>
 • 做过 Sales 与 After-sales 经营分析 → 这里把两者拆成<b>各自的 KPI 体系</b>，NC/CPO/Vans 分别核算；<br>
 • 做过定价与库存分析 → 这里用 <b>CPO 定价库存副驾</b>把模型落到单车调价、促销、调拨行动；<br>
@@ -965,9 +965,9 @@ with about_tab:
     else:
         st.markdown("""<div class="callout">
 <b>What this is:</b> a portfolio product that combines my experience in
-<b>premium automotive dealer data analytics</b> with a used-car dynamic-pricing model trained on a public
+<b>Mercedes-Benz dealer data analytics</b> with a used-car dynamic-pricing model trained on a public
 dataset, integrated into one retail decision system.<br><br>
-<b>What I did in dealer analytics → so I designed it this way:</b><br>
+<b>What I did at Mercedes → so I designed it this way:</b><br>
 • Built KPI dashboards for 50+ dealers nationally → reproduced here as the <b>Executive Overview + 10 headline KPIs</b>;<br>
 • Ran Sales and After-sales operating analysis → split here into <b>separate KPI systems</b>, with NC/CPO/Vans tracked apart;<br>
 • Worked on pricing & inventory analysis → landed here as the <b>CPO Pricing & Inventory Copilot</b> turning the model into per-car actions;<br>
@@ -991,17 +991,17 @@ raw listings (150K rows, 49 features)
     st.markdown(f"#### {t('Evidence boundary & caveats','证据边界与声明')}")
     if lang == "中文":
         st.markdown("""
-本作品集**不使用任何真实企业数据**。所有经销商网络数字、目标、客户、车辆、VIN 均为合成且确定性生成，
+本作品集**不使用任何真实奔驰数据**。所有经销商网络数字、目标、客户、车辆、VIN 均为合成且确定性生成，
 仅用于演示指标体系与决策闭环。Dealer Score 权重、车型组合与 KPI 公式是透明的作品集设计假设，
-**不代表任何企业的官方定义**。车型名称（行政轿车、SUV 等）仅为示意分段。单车定价模型基于公开二手车数据集，
+**不是奔驰官方定义**。E/C/A/S 级等车型名称仅为示意。单车定价模型基于公开二手车数据集，
 公开应用使用规则模拟器以保持仓库轻量。
 """)
     else:
         st.markdown("""
-This portfolio uses **no real company data**. All dealer-network figures, targets, customers,
+This portfolio uses **no real Mercedes-Benz data**. All dealer-network figures, targets, customers,
 vehicles and VINs are synthetic and deterministically generated, purely to demonstrate the KPI system
 and decision loop. Dealer Score weights, model mix and KPI formulas are transparent portfolio design
-assumptions, **not any company's official definitions**. Segment labels (Executive Sedan, SUVs, etc.) are illustrative.
+assumptions, **not official Mercedes-Benz definitions**. Model names (E/C/A/S-Class, etc.) are illustrative.
 The single-vehicle pricing model is trained on a public used-car dataset; the public app uses a rule-based
 simulator to keep the repo lightweight.
 """)
