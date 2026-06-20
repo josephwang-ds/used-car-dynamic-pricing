@@ -397,9 +397,9 @@ Guardrail metrics:
 - Add CI checks for app startup and dependency safety.
 - Add monitoring and retraining scripts.
 
-## 16. Technical Talking Points
+## 16. Design Rationale
 
-Use these if the interviewer goes deep:
+Key technical decisions:
 
 - MAE was selected because it is interpretable in CNY.
 - CatBoost likely performed well because categorical identifiers matter in vehicle pricing.

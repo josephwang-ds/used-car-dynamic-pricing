@@ -32,12 +32,13 @@ outputs/*
 
 # OS and editor
 .DS_Store
+.fuse_hidden*
 .cursor/
 .vscode/
 .idea/
 
 # Local workspace (optional IDE config)
-# *.code-workspace
+*.code-workspace
 docs/interview_script.md
 docs/resume_project_packaging.md
 interview_guide.md
