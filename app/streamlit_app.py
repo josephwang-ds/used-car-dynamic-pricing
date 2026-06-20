@@ -707,6 +707,43 @@ def show_figure_or_note(filename, caption, fallback) -> None:
         st.caption(fallback)
 
 
+def get_secret(name: str, default=None):
+    """Read a Streamlit secret without breaking local/offline demo runs."""
+    try:
+        return st.secrets.get(name, default)
+    except Exception:
+        return default
+
+
+def generate_llm_recommendation(question: str, kpi_context: str, language: str) -> str:
+    """Generate a grounded management recommendation from synthetic KPI context."""
+    from openai import OpenAI
+
+    api_key = get_secret("OPENAI_API_KEY")
+    if not api_key:
+        raise RuntimeError("OPENAI_API_KEY is not configured")
+
+    model = get_secret("OPENAI_MODEL", "gpt-4.1-mini")
+    client = OpenAI(api_key=api_key, timeout=25.0, max_retries=1)
+    response = client.responses.create(
+        model=model,
+        max_output_tokens=500,
+        instructions=(
+            "You are an automotive retail performance copilot. Use only the supplied "
+            "synthetic KPI context. Never invent numbers, company policies, causal claims, "
+            "customer facts, or official metric definitions. Separate observed signals from "
+            "recommended actions. Keep NC, CPO, and Vans distinct. Return a concise executive "
+            "answer with: diagnosis, evidence, 3 prioritized actions, and one measurement guardrail. "
+            f"Answer in {'Simplified Chinese' if language == '中文' else 'English'}."
+        ),
+        input=f"Business question:\n{question}\n\nSynthetic KPI context:\n{kpi_context}",
+    )
+    answer = response.output_text.strip()
+    if not answer:
+        raise RuntimeError("The model returned an empty response")
+    return answer
+
+
 # ═══════════════════════════════════════════════════════════════════════════
 add_css()
 st.sidebar.markdown("### 🌐 Language / 语言")
@@ -1231,6 +1268,11 @@ with ai_tab:
     qs = questions_zh if lang == "中文" else questions_en
     q = st.radio(t("Pick a question", "选择一个问题"), qs, index=0)
     idx = qs.index(q)
+    custom_q = st.text_input(
+        t("Or ask your own management question", "或输入自己的经营问题"),
+        placeholder=t("e.g. What should the regional manager do next?", "例如：区域经理下一步应该做什么？"),
+    )
+    active_question = custom_q.strip() or q
 
     focus = dealers[dealers.dealer_id == FOCUS_DEALER_ID].iloc[0]
     weak_region = (
@@ -1250,10 +1292,53 @@ with ai_tab:
         f"DLR-E07 的回厂率与满意度（{focus.service_retention:.0%} / {focus.csi:.0f}）是最明确的售后风险。在该店购车的客户没有回厂保养，这又加剧了 CPO 库存问题。",
         f"共有 {len(aged)} 辆 CPO 车在库超过 90 天，集中在行政轿车。把定价偏高的调向模型公允价、其余促销、滞销车跨店调拨到高需求门店。预计风险毛利可观，但及早行动可挽回。",
     ]
-    ans = (answers_zh if lang == "中文" else answers_en)[idx]
-    st.markdown(f'<div class="story-box">🤖 {ans}</div>', unsafe_allow_html=True)
-    st.caption(t("Demo note: answers are templated over the synthetic KPI layer, not a live LLM call.",
-                 "演示说明：回答基于合成 KPI 层的模板生成，非实时大模型调用。"))
+    fallback_answer = (answers_zh if lang == "中文" else answers_en)[idx]
+    action_counts = cpo_inventory["action"].value_counts()
+    kpi_context = f"""Data scope: deterministic synthetic portfolio demo; latest complete reporting period.
+National retail units: {nat['retail_units']}; sales target achievement: {nat['sales_achv']:.1%}.
+Business-line achievement — NC: {dealers.nc_units.sum()/dealers.nc_target.sum():.1%}; CPO: {dealers.cpo_units.sum()/dealers.cpo_target.sum():.1%}; Vans: {dealers.vans_units.sum()/dealers.vans_target.sum():.1%}.
+Weakest CPO region: {weak_region}.
+DLR-E07 rank: {int(focus['rank'])}/50; NC achievement: {focus.nc_achv:.1%}; CPO achievement: {focus.cpo_achv:.1%}; Vans achievement: {focus.vans_achv:.1%}.
+DLR-E07 CPO days supply: {focus.days_supply:.0f}; 90+ aging rate: {focus.aging_90:.1%}; service retention: {focus.service_retention:.1%}; CSI: {focus.csi:.1f}.
+CPO inventory: {len(cpo_inventory)} units; 90+ days: {len(aged)}; reprice actions: {int(action_counts.get('Reprice', 0))}; promote actions: {int(action_counts.get('Promote', 0))}; transfer actions: {int(action_counts.get('Transfer', 0))}.
+Dealer Score is a proposed portfolio formula: 45% Sales + 35% After-sales + 15% CX + 5% compliance; it is not an official company definition."""
+
+    llm_ready = bool(get_secret("OPENAI_API_KEY"))
+    if llm_ready:
+        st.success(t("Live LLM Copilot is ready", "实时 LLM Copilot 已连接"), icon="✅")
+        if st.button(t("Generate LLM recommendation", "生成 LLM 经营建议"), type="primary"):
+            with st.spinner(t("Analyzing the synthetic KPI layer...", "正在分析合成 KPI 层……")):
+                try:
+                    st.session_state["llm_answer"] = generate_llm_recommendation(
+                        active_question, kpi_context, lang
+                    )
+                    st.session_state["llm_question"] = active_question
+                except Exception:
+                    st.session_state.pop("llm_answer", None)
+                    st.warning(t(
+                        "The LLM call is temporarily unavailable. Showing the deterministic KPI fallback instead.",
+                        "LLM 暂时无法调用，现显示确定性的 KPI 规则答案。",
+                    ))
+    else:
+        st.info(t(
+            "Add OPENAI_API_KEY in Streamlit Secrets to enable live recommendations. Offline fallback is active.",
+            "在 Streamlit Secrets 中添加 OPENAI_API_KEY 即可启用实时建议；当前使用离线规则答案。",
+        ))
+
+    live_answer = st.session_state.get("llm_answer")
+    live_question = st.session_state.get("llm_question")
+    if live_answer and live_question == active_question:
+        st.markdown(live_answer)
+        st.caption(t(
+            "LLM recommendation grounded only in aggregated synthetic demo KPIs; verify before action.",
+            "LLM 建议仅基于聚合后的合成演示 KPI；采取行动前仍需人工核验。",
+        ))
+    else:
+        st.markdown(f'<div class="story-box">🤖 {fallback_answer}</div>', unsafe_allow_html=True)
+        st.caption(t(
+            "Deterministic fallback answer from the synthetic KPI layer.",
+            "来自合成 KPI 层的确定性兜底答案。",
+        ))
 
 
 # ═══════════════════════════ TAB 7 — ABOUT & METHOD ══════════════════════════

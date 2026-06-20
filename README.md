@@ -157,10 +157,21 @@ The app includes:
 - **After-sales KPI:** revenue, gross profit, repair orders, retention, workshop utilization, technician efficiency, quality, and customer experience.
 - **Dealer 360:** a synthetic 50-dealer network, transparent composite Dealer Score, ranking, and dealer-level root-cause drill-down.
 - **CPO Pricing & Inventory:** single-vehicle price simulation plus a dealer action list for repricing, promotion, and stock transfer.
-- **AI Narrative:** prebuilt management questions with evidence-linked bilingual answers.
+- **AI Copilot:** live, bilingual, KPI-grounded management recommendations through the OpenAI Responses API, with deterministic offline fallback answers.
 - **About & Method:** metric definitions, model results, architecture, limitations, and the synthetic-data disclosure.
 
 All dealer-network figures are deterministic synthetic data. The formulas and Dealer Score weights are proposed portfolio definitions rather than official former-employer definitions.
+
+### Enable the LLM Copilot
+
+In Streamlit Community Cloud, open **App settings → Secrets** and add:
+
+```toml
+OPENAI_API_KEY = "your-api-key"
+OPENAI_MODEL = "gpt-4.1-mini"
+```
+
+The key is read only at runtime through `st.secrets`; never add it to Git. When the key is missing or the API is unavailable, the app keeps working with deterministic KPI-based fallback answers. Only aggregated synthetic demo metrics are sent to the LLM.
 
 ## Screenshots
 
