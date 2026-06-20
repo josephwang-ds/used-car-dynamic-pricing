@@ -319,30 +319,79 @@ def national_kpis(dealers: pd.DataFrame) -> dict:
 def add_css() -> None:
     st.markdown("""
 <style>
-.block-container { padding-top: 2rem; padding-bottom: 3rem; }
+:root { --brand:#4f46e5; --brand2:#7c3aed; --ink:#0f172a; --muted:#64748b; --line:#e7eaf3; }
+.block-container { padding-top: 1.6rem; padding-bottom: 3rem; max-width: 1280px; }
+html, body, [class*="css"] { font-feature-settings: "tnum"; }
+
+/* ---- Metric cards ---- */
 div[data-testid="stMetric"] {
-    background: #f8fafc; border: 1px solid #e2e8f0;
-    border-radius: 8px; padding: 0.9rem 0.9rem 0.7rem;
+    background: linear-gradient(180deg,#ffffff 0%,#f7f9fd 100%);
+    border: 1px solid var(--line); border-radius: 14px;
+    padding: 0.85rem 1rem 0.7rem; position: relative; overflow: hidden;
+    box-shadow: 0 1px 2px rgba(15,23,42,.04), 0 8px 20px rgba(15,23,42,.04);
+    transition: transform .15s ease, box-shadow .15s ease;
 }
-div[data-testid="stMetric"] label { color: #475569; }
-div[data-testid="stMetricValue"] { font-size: 1.5rem; line-height: 1.15; }
-.section-note { color: #475569; font-size: 0.95rem; line-height: 1.5; }
-.callout { background:#f8fafc; border:1px solid #e2e8f0; border-left:4px solid #2563eb;
-    border-radius:0 8px 8px 0; padding:1rem 1.1rem; margin:0.5rem 0 1rem; }
-.story-box { background:#f0f4ff; border:1px solid rgba(99,102,241,0.35); border-left:4px solid #6366f1;
-    border-radius:0 8px 8px 0; padding:1.1rem 1.3rem; margin:0.5rem 0 1.2rem;
+div[data-testid="stMetric"]:hover { transform: translateY(-2px);
+    box-shadow: 0 2px 4px rgba(15,23,42,.06), 0 14px 30px rgba(79,70,229,.10); }
+div[data-testid="stMetric"]::before {
+    content:""; position:absolute; left:0; top:0; bottom:0; width:4px;
+    background: linear-gradient(180deg,var(--brand),var(--brand2)); border-radius:14px 0 0 14px;
+}
+div[data-testid="stMetric"] label { color: var(--muted); font-weight:600; font-size:.78rem; letter-spacing:.01em; }
+div[data-testid="stMetricValue"] { font-size: 1.55rem; line-height: 1.1; font-weight: 700; color: var(--ink); }
+div[data-testid="stMetricDelta"] { font-size: .8rem; }
+
+/* ---- Tabs ---- */
+button[data-baseweb="tab"] { font-size: .95rem; font-weight: 600; padding: 0.3rem 0.1rem; }
+div[data-baseweb="tab-list"] { gap: 6px; border-bottom: 2px solid var(--line); }
+button[data-baseweb="tab"][aria-selected="true"] { color: var(--brand); }
+
+/* ---- Section headers ---- */
+h1, h2, h3 { letter-spacing: -.01em; }
+.kpi-group { display:flex; align-items:center; gap:.5rem; margin:.4rem 0 .55rem;
+    font-weight:700; color:var(--ink); font-size:1rem; }
+.kpi-group .dot { width:10px; height:10px; border-radius:3px; }
+
+/* ---- Hero / story ---- */
+.hero { background: linear-gradient(125deg,#0b1220 0%, #2a2f6b 55%, #4f46e5 110%);
+    color:#eef1ff; border-radius:20px; padding:1.4rem 1.6rem; margin:.2rem 0 1rem;
+    box-shadow: 0 18px 44px rgba(31,36,80,.28); line-height:1.75; font-size:.9rem; }
+.hero b { color:#fff; }
+.hero .tag { display:inline-block; background:rgba(255,255,255,.14); color:#fff;
+    border:1px solid rgba(255,255,255,.22); padding:2px 10px; border-radius:999px;
+    font-size:.72rem; font-weight:600; margin-right:6px; }
+
+.story-box { background:#f0f4ff; border:1px solid rgba(99,102,241,0.3); border-left:4px solid #6366f1;
+    border-radius:0 12px 12px 0; padding:1.05rem 1.25rem; margin:0.5rem 0 1.2rem;
     color:#1e1b4b; line-height:1.8; font-size:0.88rem; }
+.callout { background:#f7f9fd; border:1px solid var(--line); border-left:4px solid var(--brand);
+    border-radius:0 12px 12px 0; padding:1rem 1.1rem; margin:0.5rem 0 1rem; }
 .finding-overpriced { background:#fef2f2; border:1px solid #fecaca; border-left:4px solid #dc2626;
-    border-radius:0 8px 8px 0; padding:1rem 1.2rem; margin:0.5rem 0 1rem; color:#7f1d1d; line-height:1.8; }
+    border-radius:0 12px 12px 0; padding:1rem 1.2rem; margin:0.5rem 0 1rem; color:#7f1d1d; line-height:1.8; }
 .finding-underpriced { background:#eff6ff; border:1px solid #bfdbfe; border-left:4px solid #2563eb;
-    border-radius:0 8px 8px 0; padding:1rem 1.2rem; margin:0.5rem 0 1rem; color:#1e3a5f; line-height:1.8; }
+    border-radius:0 12px 12px 0; padding:1rem 1.2rem; margin:0.5rem 0 1rem; color:#1e3a5f; line-height:1.8; }
 .finding-fair { background:#f0fdf4; border:1px solid #bbf7d0; border-left:4px solid #16a34a;
-    border-radius:0 8px 8px 0; padding:1rem 1.2rem; margin:0.5rem 0 1rem; color:#14532d; line-height:1.8; }
+    border-radius:0 12px 12px 0; padding:1rem 1.2rem; margin:0.5rem 0 1rem; color:#14532d; line-height:1.8; }
 .warning-callout { background:#fff7ed; border:1px solid #fed7aa; border-left:4px solid #f97316;
-    border-radius:0 8px 8px 0; padding:0.6rem 0.9rem; margin:0.3rem 0 0.8rem; font-size:0.82rem; color:#7c2d12; }
+    border-radius:0 10px 10px 0; padding:0.6rem 0.9rem; margin:0.3rem 0 0.8rem; font-size:0.82rem; color:#7c2d12; }
 .preset-desc { color:#64748b; font-size:0.82rem; font-style:italic; margin-bottom:0.8rem; line-height:1.5; }
 .alert-box { background:#fff7ed; border:1px solid #fdba74; border-left:4px solid #ea580c;
-    border-radius:0 8px 8px 0; padding:1rem 1.2rem; margin:0.5rem 0 1rem; color:#7c2d12; line-height:1.7; }
+    border-radius:0 12px 12px 0; padding:1rem 1.2rem; margin:0.5rem 0 1rem; color:#7c2d12; line-height:1.7; }
+
+/* ---- Drill-down cards ---- */
+.entry { background:#fff; border:1px solid var(--line); border-radius:14px; padding:1rem 1.1rem;
+    box-shadow:0 8px 22px rgba(15,23,42,.05); height:100%; transition: transform .15s ease, box-shadow .15s ease; }
+.entry:hover { transform: translateY(-2px); box-shadow:0 14px 30px rgba(79,70,229,.12); }
+.entry h4 { margin:.1rem 0 .4rem; font-size:1.02rem; }
+.entry p { margin:0; color:var(--muted); font-size:.85rem; line-height:1.6; }
+
+/* ---- Dataframes ---- */
+div[data-testid="stDataFrame"] { border-radius:12px; overflow:hidden; border:1px solid var(--line); }
+
+/* ---- Sidebar ---- */
+section[data-testid="stSidebar"] { background:#fbfcfe; border-right:1px solid var(--line); }
+
+hr { margin: 1rem 0; border-color: var(--line); }
 </style>
 """, unsafe_allow_html=True)
 
@@ -401,63 +450,106 @@ def dynamic_finding(status, gap_pct, fair_price, current_listing, rec_price, _la
 
 
 # ── Plot helpers ──────────────────────────────────────────────────────────────
+BRAND = "#4f46e5"; BRAND2 = "#7c3aed"; OK = "#16a34a"; WARN = "#ea580c"; BAD = "#dc2626"
+INK = "#0f172a"; MUTED = "#64748b"; GRID = "#e7eaf3"
+plt.rcParams.update({
+    "figure.facecolor": "white", "axes.facecolor": "white",
+    "axes.edgecolor": "#cbd5e1", "axes.labelcolor": MUTED,
+    "xtick.color": MUTED, "ytick.color": MUTED, "text.color": INK,
+    "axes.titlecolor": INK, "font.size": 10, "figure.max_open_warning": 0,
+})
+
+
+def _clean(ax, x=False, y=False):
+    for s in ("top", "right"):
+        ax.spines[s].set_visible(False)
+    for s in ("left", "bottom"):
+        ax.spines[s].set_color("#cbd5e1")
+    if x:
+        ax.grid(axis="x", color=GRID, linewidth=1)
+    if y:
+        ax.grid(axis="y", color=GRID, linewidth=1)
+    ax.set_axisbelow(True)
+    ax.title.set_fontweight("bold")
+    ax.title.set_fontsize(12)
+
+
+def _grad_fill(ax, x, y, color):
+    import matplotlib.dates as _  # noqa
+    ax.fill_between(range(len(x)), y, min(y) * 0.96, color=color, alpha=0.12)
+
+
 def plot_price_comparison(current_listing, fair_price, recommended, status, txt=None) -> plt.Figure:
     txt = txt or {}
     labels = [txt.get("cur", "Current listing"), txt.get("fair", "Fair value (model)"), txt.get("rec", "Recommended")]
     values = [current_listing, fair_price, recommended]
-    status_colors = {"Overpriced": "#dc2626", "Underpriced": "#2563eb", "Fair Price": "#16a34a"}
-    colors = [status_colors.get(status, "#888888"), "#16a34a", "#6366f1"]
+    status_colors = {"Overpriced": BAD, "Underpriced": "#2563eb", "Fair Price": OK}
+    colors = [status_colors.get(status, "#888888"), OK, BRAND]
     fig, ax = plt.subplots(figsize=(7, 4))
-    bars = ax.bar(labels, values, color=colors, edgecolor="white", linewidth=0.8, width=0.5)
-    ax.set_ylabel(txt.get("ylab", "Price (CNY)"), fontsize=10)
-    ax.set_title(txt.get("title", "Pricing simulator output"), pad=12, fontsize=11)
-    ax.spines["top"].set_visible(False); ax.spines["right"].set_visible(False)
-    ax.grid(axis="y", alpha=0.15); ax.set_axisbelow(True)
+    bars = ax.bar(labels, values, color=colors, edgecolor="white", linewidth=1, width=0.55)
+    ax.set_ylabel(txt.get("ylab", "Price (CNY)"))
+    ax.set_title(txt.get("title", "Pricing simulator output"), pad=12)
+    ax.set_ylim(0, max(values) * 1.16)
     for bar, val in zip(bars, values):
-        ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 100,
-                f"CNY {val:,.0f}", ha="center", va="bottom", fontsize=9.5, fontweight="bold")
+        ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + max(values) * 0.02,
+                f"{val:,.0f}", ha="center", va="bottom", fontsize=9.5, fontweight="bold")
+    _clean(ax, y=True)
     plt.tight_layout()
     return fig
 
 
 def plot_model_results(title="Pricing model comparison — shared holdout", xlab="Validation MAE (CNY)") -> plt.Figure:
-    cd = MODEL_RESULTS.sort_values("Validation MAE", ascending=True)
-    colors = ["#16a34a" if m == "Weighted Ensemble" else "#2563eb" for m in cd["Model"]]
-    fig, ax = plt.subplots(figsize=(7, 3.6))
-    ax.barh(cd["Model"], cd["Validation MAE"], color=colors, height=0.55)
-    ax.set_xlabel(xlab)
-    ax.set_title(title, pad=10, fontsize=11)
-    ax.spines["top"].set_visible(False); ax.spines["right"].set_visible(False)
-    ax.grid(axis="x", alpha=0.15); ax.set_axisbelow(True)
-    for i, v in enumerate(cd["Validation MAE"]):
-        ax.text(v + 3, i, f"{v:.2f}", va="center", fontsize=9.5)
+    cd = MODEL_RESULTS.sort_values("Validation MAE", ascending=False)
+    colors = [OK if m == "Weighted Ensemble" else "#c7d2fe" for m in cd["Model"]]
+    fig, ax = plt.subplots(figsize=(7, 3.4))
+    bars = ax.barh(cd["Model"], cd["Validation MAE"], color=colors, height=0.6,
+                   edgecolor="white", linewidth=0.8)
+    ax.set_xlabel(xlab); ax.set_title(title, pad=10)
+    ax.set_xlim(0, cd["Validation MAE"].max() * 1.16)
+    for b, v, m in zip(bars, cd["Validation MAE"], cd["Model"]):
+        ax.text(v + 4, b.get_y() + b.get_height() / 2, f"{v:.2f}", va="center",
+                fontsize=9.5, fontweight="bold", color="#15803d" if m == "Weighted Ensemble" else "#3730a3")
+    _clean(ax, x=True)
     plt.tight_layout()
     return fig
 
 
 def plot_monthly(monthly: pd.DataFrame, metric: str, title: str, ylab: str) -> plt.Figure:
+    x = list(range(len(monthly))); y = monthly[metric].tolist()
     fig, ax = plt.subplots(figsize=(7, 3.4))
-    ax.plot(monthly["month"], monthly[metric], color="#6366f1", linewidth=2.2, marker="o", markersize=4)
-    ax.set_title(title, fontsize=11, pad=8)
-    ax.set_ylabel(ylab)
-    ax.spines["top"].set_visible(False); ax.spines["right"].set_visible(False)
-    ax.grid(alpha=0.12); ax.set_axisbelow(True)
-    plt.xticks(rotation=45, ha="right", fontsize=8)
-    ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda x, _: f"{x:,.0f}"))
+    ax.fill_between(x, y, min(y) * 0.94, color=BRAND, alpha=0.10)
+    ax.plot(x, y, color=BRAND, linewidth=2.6, marker="o", markersize=5,
+            markerfacecolor="white", markeredgecolor=BRAND, markeredgewidth=1.6)
+    ax.scatter([x[-1]], [y[-1]], s=70, color=BRAND, zorder=5)
+    ax.annotate(f"{y[-1]:,.0f}", (x[-1], y[-1]), textcoords="offset points",
+                xytext=(-4, 10), ha="right", fontsize=9, fontweight="bold", color=BRAND)
+    ax.set_xticks(x); ax.set_xticklabels(monthly["month"], rotation=45, ha="right", fontsize=8)
+    ax.set_title(title, pad=8); ax.set_ylabel(ylab)
+    ax.set_ylim(min(y) * 0.92, max(y) * 1.08)
+    _clean(ax, y=True)
+    ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda v, _: f"{v:,.0f}"))
     plt.tight_layout()
     return fig
 
 
 def plot_dealer_ranking(dealers: pd.DataFrame, focus_id: str,
                         title="Top dealers by composite score", xlab="Dealer Score (0–100)") -> plt.Figure:
-    top = dealers.head(15)
-    colors = ["#ea580c" if d == focus_id else "#93c5fd" for d in top["dealer_id"]]
-    fig, ax = plt.subplots(figsize=(7, 5))
-    ax.barh(top["dealer_id"][::-1], top["dealer_score"][::-1], color=colors[::-1], height=0.62)
-    ax.set_xlabel(xlab)
-    ax.set_title(title, fontsize=11, pad=8)
-    ax.spines["top"].set_visible(False); ax.spines["right"].set_visible(False)
-    ax.grid(axis="x", alpha=0.15); ax.set_axisbelow(True)
+    # show top 12 + the focus dealer if it falls outside (e.g. ranked last)
+    top = dealers.head(12)
+    if focus_id not in set(top["dealer_id"]):
+        top = pd.concat([top, dealers[dealers.dealer_id == focus_id]])
+    top = top.iloc[::-1]
+    colors = [WARN if d == focus_id else "#c7d2fe" for d in top["dealer_id"]]
+    fig, ax = plt.subplots(figsize=(7, 5.2))
+    bars = ax.barh(top["dealer_id"], top["dealer_score"], color=colors, height=0.66,
+                   edgecolor="white", linewidth=0.8)
+    for b, v, d in zip(bars, top["dealer_score"], top["dealer_id"]):
+        ax.text(v - 1.5, b.get_y() + b.get_height() / 2, f"{v:.0f}",
+                va="center", ha="right", fontsize=8.5, fontweight="bold",
+                color="white" if d == focus_id else "#3730a3")
+    ax.set_xlabel(xlab); ax.set_title(title, pad=8)
+    ax.set_xlim(0, max(top["dealer_score"]) * 1.08)
+    _clean(ax, x=True)
     plt.tight_layout()
     return fig
 
@@ -470,12 +562,96 @@ def plot_dealer_radar(row, lang) -> plt.Figure:
     angles = np.linspace(0, 2 * np.pi, len(cats), endpoint=False).tolist()
     vals_c = vals + vals[:1]; angles_c = angles + angles[:1]
     fig, ax = plt.subplots(figsize=(4.6, 4.6), subplot_kw=dict(polar=True))
-    ax.plot(angles_c, vals_c, color="#6366f1", linewidth=2)
-    ax.fill(angles_c, vals_c, color="#6366f1", alpha=0.18)
-    ax.set_xticks(angles); ax.set_xticklabels(cats, fontsize=9)
+    ax.set_theta_offset(np.pi / 2); ax.set_theta_direction(-1)
+    ax.plot(angles_c, vals_c, color=BRAND, linewidth=2.4)
+    ax.fill(angles_c, vals_c, color=BRAND, alpha=0.22)
+    ax.scatter(angles, vals, s=45, color=BRAND, zorder=5, edgecolor="white", linewidth=1.2)
+    ax.set_xticks(angles); ax.set_xticklabels(cats, fontsize=9, fontweight="bold")
     ax.set_ylim(0, 100); ax.set_yticks([25, 50, 75, 100])
     ax.set_yticklabels(["25", "50", "75", "100"], fontsize=7, color="#94a3b8")
-    ax.set_title(title, fontsize=11, pad=18)
+    ax.grid(color=GRID); ax.spines["polar"].set_color("#cbd5e1")
+    ax.set_title(title, fontsize=12, fontweight="bold", pad=18)
+    plt.tight_layout()
+    return fig
+
+
+def plot_hbar(labels, values, fmt="{:.0%}", title="", xlab="", highlight_idx=None,
+              base_color="#c7d2fe", hi_color=None) -> plt.Figure:
+    hi_color = hi_color or WARN
+    fig, ax = plt.subplots(figsize=(7, 3.4))
+    colors = [hi_color if i == highlight_idx else base_color for i in range(len(labels))]
+    bars = ax.barh(labels, values, color=colors, height=0.6, edgecolor="white", linewidth=0.8)
+    for b, v in zip(bars, values):
+        ax.text(v, b.get_y() + b.get_height() / 2, "  " + fmt.format(v),
+                va="center", ha="left", fontsize=9, fontweight="bold", color="#3730a3")
+    ax.set_title(title, pad=8); ax.set_xlabel(xlab)
+    ax.set_xlim(0, max(values) * 1.18)
+    _clean(ax, x=True)
+    plt.tight_layout()
+    return fig
+
+
+def plot_sales_achv(nc, cpo, vans, labels, title="") -> plt.Figure:
+    cats = labels; vals = [nc, cpo, vans]
+    colors = [OK if v >= 1.0 else (WARN if v >= 0.85 else BAD) for v in vals]
+    fig, ax = plt.subplots(figsize=(7, 3.4))
+    bars = ax.bar(cats, vals, color=colors, width=0.55, edgecolor="white", linewidth=1)
+    ax.axhline(1.0, color=MUTED, linestyle="--", linewidth=1.2)
+    ax.text(2.45, 1.005, "target", fontsize=8, color=MUTED, ha="right")
+    for b, v in zip(bars, vals):
+        ax.text(b.get_x() + b.get_width() / 2, v + 0.01, f"{v:.0%}",
+                ha="center", fontsize=10, fontweight="bold", color=INK)
+    ax.set_ylim(0, max(vals) * 1.18); ax.set_title(title, pad=8)
+    ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda v, _: f"{v:.0%}"))
+    _clean(ax, y=True)
+    plt.tight_layout()
+    return fig
+
+
+def plot_score_hist(dealers, focus_id, title="", xlab="") -> plt.Figure:
+    scores = dealers["dealer_score"]; fs = float(dealers.loc[dealers.dealer_id == focus_id, "dealer_score"].iloc[0])
+    fig, ax = plt.subplots(figsize=(7, 3.2))
+    ax.hist(scores, bins=14, color="#c7d2fe", edgecolor="white")
+    ax.axvline(fs, color=WARN, linewidth=2.4)
+    ax.annotate(f"{focus_id}", (fs, ax.get_ylim()[1] * 0.86), color=WARN,
+                fontsize=9, fontweight="bold", ha="center")
+    ax.axvline(scores.mean(), color=MUTED, linestyle="--", linewidth=1.4)
+    ax.set_title(title, pad=8); ax.set_xlabel(xlab); ax.set_ylabel("Dealers")
+    _clean(ax, y=True)
+    plt.tight_layout()
+    return fig
+
+
+def plot_gap_scatter(inv, title="", xlab="", ylab="") -> plt.Figure:
+    cmap = {"Reprice": BAD, "Promote": WARN, "Transfer": "#0891b2", "Raise": "#2563eb", "Hold": "#94a3b8"}
+    fig, ax = plt.subplots(figsize=(7, 3.8))
+    for action, g in inv.groupby("action"):
+        ax.scatter(g["days_in_stock"], g["gap_pct"] * 100, s=34, alpha=0.8,
+                   color=cmap.get(action, "#94a3b8"), label=action, edgecolor="white", linewidth=0.5)
+    ax.axhline(0, color=MUTED, linewidth=1)
+    ax.axvline(90, color=WARN, linestyle="--", linewidth=1.2)
+    ax.set_title(title, pad=8); ax.set_xlabel(xlab); ax.set_ylabel(ylab)
+    ax.legend(fontsize=7.5, frameon=False, ncol=5, loc="upper center", bbox_to_anchor=(0.5, -0.22))
+    _clean(ax, y=True)
+    plt.tight_layout()
+    return fig
+
+
+def plot_action_breakdown(inv, title="", label_map=None) -> plt.Figure:
+    label_map = label_map or {}
+    order = ["Reprice", "Promote", "Transfer", "Raise", "Hold"]
+    cmap = {"Reprice": BAD, "Promote": WARN, "Transfer": "#0891b2", "Raise": "#2563eb", "Hold": "#94a3b8"}
+    counts = inv["action"].value_counts()
+    items = [(a, int(counts.get(a, 0))) for a in order if counts.get(a, 0) > 0]
+    labels = [label_map.get(a, a) for a, _ in items]; vals = [v for _, v in items]
+    colors = [cmap[a] for a, _ in items]
+    fig, ax = plt.subplots(figsize=(7, 3.2))
+    bars = ax.bar(labels, vals, color=colors, width=0.6, edgecolor="white", linewidth=1)
+    for b, v in zip(bars, vals):
+        ax.text(b.get_x() + b.get_width() / 2, v + max(vals) * 0.02, str(v),
+                ha="center", fontsize=10, fontweight="bold", color=INK)
+    ax.set_ylim(0, max(vals) * 1.18); ax.set_title(title, pad=8)
+    _clean(ax, y=True)
     plt.tight_layout()
     return fig
 
@@ -567,21 +743,22 @@ st.caption(t("National executive overview · Sales & After-sales KPI · 50-deale
              "全国经营总览 · Sales 与 After-sales KPI · 50 家经销商 360 · CPO 定价与库存行动 —— 一个完整决策闭环。"))
 
 if lang == "中文":
-    st.markdown("""<div class="story-box">
-<b>📊 产品故事：</b>从全国经营监控，到经销商诊断，再到单车定价行动，构成一个闭环。<br><br>
+    st.markdown("""<div class="hero">
+<span class="tag">全国总览</span><span class="tag">Dealer 360</span><span class="tag">CPO 定价行动</span><span class="tag">中英双语</span><br><br>
+<b>📊 产品故事：</b>从全国经营监控，到经销商诊断，再到单车定价行动，构成一个闭环。
 本作品集把<b>高端汽车经销商分析经验</b>与公开二手车定价模型整合为一个产品：
-全国总览发现异常 → Dealer 360 解释 Sales / After-sales 经营差距 →
-CPO 定价库存层把洞察落到单车调价、促销和跨店调拨。<br><br>
-<b>演示故事线：</b>全国销量达成正常，但 <b>DLR-E07</b> 综合排名下滑——CPO 未达标、客户回厂率偏低，
+全国总览发现异常 → Dealer 360 解释 Sales / After-sales 经营差距 → CPO 定价库存层把洞察落到单车调价、促销和跨店调拨。<br><br>
+<b>🎯 演示故事线：</b>全国销量达成正常，但 <b>DLR-E07</b> 综合排名下滑——CPO 未达标、客户回厂率偏低，
 其行政轿车 90 天以上库存过多且定价偏高。点开各 Tab 跟随这条线索。
 </div>""", unsafe_allow_html=True)
 else:
-    st.markdown("""<div class="story-box">
-<b>📊 The product story:</b> one loop from national monitoring → dealer diagnosis → single-vehicle pricing action.<br><br>
+    st.markdown("""<div class="hero">
+<span class="tag">Executive Overview</span><span class="tag">Dealer 360</span><span class="tag">CPO Pricing Actions</span><span class="tag">EN / 中文</span><br><br>
+<b>📊 The product story:</b> one loop from national monitoring → dealer diagnosis → single-vehicle pricing action.
 This portfolio piece integrates <b>premium automotive dealer-analytics experience</b> with a public used-car
 pricing model into a single product: the national overview finds the anomaly → Dealer 360 explains the
 Sales / After-sales gap → the CPO pricing & inventory layer turns insight into per-car reprice, promote, or transfer.<br><br>
-<b>Demo storyline:</b> national sales achievement is on track, yet <b>DLR-E07</b> slips in the ranking — CPO target missed,
+<b>🎯 Demo storyline:</b> national sales achievement is on track, yet <b>DLR-E07</b> slips in the ranking — CPO target missed,
 service retention low, and its Executive Sedan 90+ day stock is overpriced. Follow that thread across the tabs.
 </div>""", unsafe_allow_html=True)
 
@@ -603,14 +780,14 @@ with exec_tab:
     st.subheader(t("National headline KPIs", "全国首屏指标"))
     st.caption(t("10 metrics management watches first — Sales (left) and After-sales (right).",
                  "管理层最先看的 10 个指标 —— 左侧 Sales，右侧 After-sales。"))
-    st.markdown(f"**{t('Sales','销售')}**")
+    st.markdown(f'<div class="kpi-group"><span class="dot" style="background:#4f46e5"></span>{t("Sales","销售")}</div>', unsafe_allow_html=True)
     s1, s2, s3, s4, s5 = st.columns(5)
     s1.metric(t("Retail Sales Units", "零售销量"), f"{nat['retail_units']:,}")
     s2.metric(t("Sales Target Achievement", "销售目标达成"), f"{nat['sales_achv']:.1%}")
     s3.metric(t("YoY Growth", "同比增长"), f"{nat['yoy']:+.1%}")
     s4.metric(t("Gross Profit / Unit", "单车毛利"), f"CNY {nat['gp_per_unit']:,.0f}")
     s5.metric(t("Inventory Days Supply", "库存天数"), f"{nat['days_supply']:.0f}")
-    st.markdown(f"**{t('After-sales','售后')}**")
+    st.markdown(f'<div class="kpi-group"><span class="dot" style="background:#16a34a"></span>{t("After-sales","售后")}</div>', unsafe_allow_html=True)
     a1, a2, a3, a4, a5 = st.columns(5)
     a1.metric(t("After-sales Revenue", "售后收入"), f"CNY {nat['as_revenue']/1e9:,.2f}B")
     a2.metric(t("AS Revenue Achievement", "售后目标达成"), f"{nat['as_achv']:.1%}")
@@ -630,9 +807,9 @@ with exec_tab:
 
     st.markdown(f"#### {t('Drill-down entries','下钻入口')}")
     d1, d2, d3 = st.columns(3)
-    d1.markdown(f'<div class="callout"><b>📈 Sales</b><br>{t("NC · CPO · Vans target achievement, pricing, conversion and inventory aging.","NC · CPO · Vans 目标达成、定价、转化与库存老化。")}</div>', unsafe_allow_html=True)
-    d2.markdown(f'<div class="callout" style="border-left-color:#16a34a"><b>🔧 After-sales</b><br>{t("Revenue, absorption, workshop efficiency, retention and quality.","收入、吸收率、工位效率、客户回厂率与质量。")}</div>', unsafe_allow_html=True)
-    d3.markdown(f'<div class="callout" style="border-left-color:#f59e0b"><b>🏆 Dealer Network</b><br>{t("Region · dealer · model — composite score and root-cause.","区域 · 经销商 · 车型 —— 综合评分与根因。")}</div>', unsafe_allow_html=True)
+    d1.markdown(f'<div class="entry"><h4>📈 Sales</h4><p>{t("NC · CPO · Vans target achievement, pricing, conversion and inventory aging.","NC · CPO · Vans 目标达成、定价、转化与库存老化。")}</p></div>', unsafe_allow_html=True)
+    d2.markdown(f'<div class="entry"><h4>🔧 After-sales</h4><p>{t("Revenue, absorption, workshop efficiency, retention and quality.","收入、吸收率、工位效率、客户回厂率与质量。")}</p></div>', unsafe_allow_html=True)
+    d3.markdown(f'<div class="entry"><h4>🏆 Dealer Network</h4><p>{t("Region · dealer · segment — composite score and root-cause.","区域 · 经销商 · 车型 —— 综合评分与根因。")}</p></div>', unsafe_allow_html=True)
 
 
 # ════════════════════════════ TAB 2 — SALES KPI ══════════════════════════════
@@ -664,6 +841,25 @@ with sales_tab:
     r2[2].metric(t("Days to Sale", "成交天数"), f"{dts:.0f}")
     r2[3].metric(t("Days Supply", "库存天数"), f"{dsupply:.0f}")
     r2[4].metric(t("90+ Days Aging Rate", "90天以上库存率"), f"{aging:.1%}")
+
+    st.divider()
+    g1, g2 = st.columns(2)
+    with g1:
+        st.pyplot(plot_sales_achv(nc_achv, cpo_achv, vans_achv,
+                                  ["NC", "CPO", "Vans"],
+                                  ct("Target achievement by line", "各业务线目标达成")))
+        st.caption(t("CPO is the only line below target — the rest is healthy.",
+                     "仅 CPO 低于目标，其余业务线健康。"))
+    with g2:
+        reg_cpo = dealers.groupby("region").apply(
+            lambda x: x.cpo_units.sum() / x.cpo_target.sum()).reindex(REGIONS)
+        labels = [REGIONS_ZH[r] if (lang == "中文" and CJK_OK) else r for r in REGIONS]
+        weak = int(np.argmin(reg_cpo.values))
+        st.pyplot(plot_hbar(labels, list(reg_cpo.values), fmt="{:.0%}",
+                            title=ct("CPO achievement by region", "分区域 CPO 达成"),
+                            highlight_idx=weak))
+        st.caption(t("East trails on CPO — the region carrying DLR-E07.",
+                     "华东区 CPO 落后 —— 正是 DLR-E07 所在区域。"))
 
     st.divider()
     st.markdown(f"#### {t('NC / CPO / Vans line summary','NC / CPO / Vans 业务线汇总')}")
@@ -729,6 +925,27 @@ with aftersales_tab:
     st.markdown(f'<div class="warning-callout">{t("Service Absorption = after-sales gross profit ÷ dealer fixed operating cost. Fixed-cost is synthetic here; in a real deployment it is shown only when a credible expense field exists.","Service Absorption = 售后毛利 ÷ 经销商固定运营费用。此处费用为合成；真实部署中只有存在可靠费用字段时才展示。")}</div>', unsafe_allow_html=True)
 
     st.divider()
+    g1, g2 = st.columns(2)
+    with g1:
+        reg_ret = dealers.groupby("region").service_retention.mean().reindex(REGIONS)
+        labels = [REGIONS_ZH[r] if (lang == "中文" and CJK_OK) else r for r in REGIONS]
+        weak = int(np.argmin(reg_ret.values))
+        st.pyplot(plot_hbar(labels, list(reg_ret.values), fmt="{:.0%}",
+                            title=ct("Service retention by region", "分区域客户回厂率"),
+                            highlight_idx=weak))
+        st.caption(t("Retention dips in the East — lost service customers compound the CPO problem.",
+                     "华东区回厂率下滑 —— 流失的售后客户加剧了 CPO 问题。"))
+    with g2:
+        reg_csi = dealers.groupby("region").csi.mean().reindex(REGIONS)
+        labels = [REGIONS_ZH[r] if (lang == "中文" and CJK_OK) else r for r in REGIONS]
+        weak = int(np.argmin(reg_csi.values))
+        st.pyplot(plot_hbar(labels, list(reg_csi.values), fmt="{:.1f}",
+                            title=ct("Service CSI by region", "分区域满意度 CSI"),
+                            highlight_idx=weak))
+        st.caption(t("Same region trails on satisfaction — a consistent signal.",
+                     "同一区域满意度也落后 —— 信号一致。"))
+
+    st.divider()
     st.markdown(f"#### {t('After-sales KPI by region','分区域售后指标')}")
     reg = dealers.groupby("region").agg(
         as_revenue=("as_revenue", "sum"),
@@ -773,6 +990,12 @@ with dealer_tab:
             t("CX", "体验"): dealers["cx_index"].map(lambda x: f"{x:.0f}"),
         })
         st.dataframe(rank_tbl, hide_index=True, use_container_width=True, height=360)
+
+    st.pyplot(plot_score_hist(dealers, FOCUS_DEALER_ID,
+                              title=ct("Dealer score distribution", "经销商综合分分布"),
+                              xlab=ct("Dealer Score (0–100)", "综合分 (0–100)")))
+    st.caption(t("DLR-E07 sits far left of the pack and well below the network average (dashed).",
+                 "DLR-E07 远在分布左侧，明显低于全网均值（虚线）。"))
 
     st.divider()
     default_idx = int(dealers.index[dealers.dealer_id == FOCUS_DEALER_ID][0])
@@ -873,6 +1096,21 @@ with cpo_tab:
     k[1].metric(t("Units 90+ days", "90天+库存"), f"{len(aged)}", f"{len(aged)/len(cpo_inventory):.0%}")
     k[2].metric(t("Executive Sedan 90+ days", "行政轿车 90天+"), f"{len(eclass_aged)}")
     k[3].metric(t("Est. margin at risk", "预计风险毛利"), f"CNY {margin_at_risk/1e6:,.2f}M")
+
+    gc1, gc2 = st.columns([1.3, 1])
+    with gc1:
+        st.pyplot(plot_gap_scatter(cpo_inventory,
+                                   title=ct("Price gap vs days in stock", "价差 × 在库天数"),
+                                   xlab=ct("Days in stock", "在库天数"),
+                                   ylab=ct("Price gap %", "价差 %")))
+        st.caption(t("Top-right cluster (overpriced + aged) is where reprice/promote/transfer concentrate.",
+                     "右上角（高估且老化）正是调价/促销/调拨集中的区域。"))
+    with gc2:
+        st.pyplot(plot_action_breakdown(cpo_inventory,
+                                        title=ct("Recommended actions", "推荐行动分布"),
+                                        label_map={"Reprice": ct("Reprice", "调价"), "Promote": ct("Promote", "促销"),
+                                                   "Transfer": ct("Transfer", "调拨"), "Raise": ct("Raise", "提价"),
+                                                   "Hold": ct("Hold", "维持")}))
 
     model_filter = st.multiselect(t("Filter by model", "按车型筛选"),
                                   [CPO_MODELS_ZH[m] if lang == "中文" else m for m in CPO_MODELS],
