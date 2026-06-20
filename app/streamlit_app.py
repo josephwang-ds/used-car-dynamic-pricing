@@ -12,9 +12,49 @@ from pathlib import Path
 from typing import Dict
 
 import matplotlib.pyplot as plt
+import matplotlib.font_manager as fm
 import numpy as np
 import pandas as pd
 import streamlit as st
+
+
+def setup_cjk_font() -> bool:
+    """Enable Chinese glyphs in charts if any CJK font is available on the host.
+
+    Works on the user's Mac (PingFang / Heiti), Streamlit Cloud (Noto CJK via
+    packages.txt), and most Linux boxes. If no CJK font is found, charts fall back
+    to English text so they never render tofu boxes.
+    """
+    explicit = [
+        "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc",     # Debian / Streamlit Cloud
+        "/System/Library/Fonts/PingFang.ttc",                          # macOS
+        "/System/Library/Fonts/STHeiti Light.ttc",                     # macOS
+        "/Library/Fonts/Arial Unicode.ttf",                            # macOS
+        "/usr/share/fonts/truetype/wqy/wqy-zenhei.ttc",                # Linux
+        "C:/Windows/Fonts/msyh.ttc",                                   # Windows
+    ]
+    for p in explicit:
+        try:
+            if Path(p).exists():
+                fm.fontManager.addfont(p)
+        except Exception:
+            pass
+    candidates = [
+        "Noto Sans CJK SC", "Noto Sans CJK JP", "Noto Sans SC", "PingFang SC",
+        "Heiti SC", "STHeiti", "Hiragino Sans GB", "Microsoft YaHei", "SimHei",
+        "Source Han Sans SC", "Source Han Sans CN", "WenQuanYi Zen Hei", "Arial Unicode MS",
+    ]
+    available = {f.name for f in fm.fontManager.ttflist}
+    for fam in candidates:
+        if fam in available:
+            plt.rcParams["font.sans-serif"] = [fam] + list(plt.rcParams.get("font.sans-serif", []))
+            plt.rcParams["axes.unicode_minus"] = False
+            return True
+    plt.rcParams["axes.unicode_minus"] = False
+    return False
+
+
+CJK_OK = setup_cjk_font()
 
 
 st.set_page_config(
@@ -361,15 +401,16 @@ def dynamic_finding(status, gap_pct, fair_price, current_listing, rec_price, _la
 
 
 # ── Plot helpers ──────────────────────────────────────────────────────────────
-def plot_price_comparison(current_listing, fair_price, recommended, status) -> plt.Figure:
-    labels = ["Current listing", "Fair value (model)", "Recommended"]
+def plot_price_comparison(current_listing, fair_price, recommended, status, txt=None) -> plt.Figure:
+    txt = txt or {}
+    labels = [txt.get("cur", "Current listing"), txt.get("fair", "Fair value (model)"), txt.get("rec", "Recommended")]
     values = [current_listing, fair_price, recommended]
     status_colors = {"Overpriced": "#dc2626", "Underpriced": "#2563eb", "Fair Price": "#16a34a"}
     colors = [status_colors.get(status, "#888888"), "#16a34a", "#6366f1"]
     fig, ax = plt.subplots(figsize=(7, 4))
     bars = ax.bar(labels, values, color=colors, edgecolor="white", linewidth=0.8, width=0.5)
-    ax.set_ylabel("Price (CNY)", fontsize=10)
-    ax.set_title("Pricing simulator output", pad=12, fontsize=11)
+    ax.set_ylabel(txt.get("ylab", "Price (CNY)"), fontsize=10)
+    ax.set_title(txt.get("title", "Pricing simulator output"), pad=12, fontsize=11)
     ax.spines["top"].set_visible(False); ax.spines["right"].set_visible(False)
     ax.grid(axis="y", alpha=0.15); ax.set_axisbelow(True)
     for bar, val in zip(bars, values):
@@ -379,13 +420,13 @@ def plot_price_comparison(current_listing, fair_price, recommended, status) -> p
     return fig
 
 
-def plot_model_results() -> plt.Figure:
+def plot_model_results(title="Pricing model comparison — shared holdout", xlab="Validation MAE (CNY)") -> plt.Figure:
     cd = MODEL_RESULTS.sort_values("Validation MAE", ascending=True)
     colors = ["#16a34a" if m == "Weighted Ensemble" else "#2563eb" for m in cd["Model"]]
     fig, ax = plt.subplots(figsize=(7, 3.6))
     ax.barh(cd["Model"], cd["Validation MAE"], color=colors, height=0.55)
-    ax.set_xlabel("Validation MAE (CNY)")
-    ax.set_title("Pricing model comparison — shared holdout", pad=10, fontsize=11)
+    ax.set_xlabel(xlab)
+    ax.set_title(title, pad=10, fontsize=11)
     ax.spines["top"].set_visible(False); ax.spines["right"].set_visible(False)
     ax.grid(axis="x", alpha=0.15); ax.set_axisbelow(True)
     for i, v in enumerate(cd["Validation MAE"]):
@@ -407,13 +448,14 @@ def plot_monthly(monthly: pd.DataFrame, metric: str, title: str, ylab: str) -> p
     return fig
 
 
-def plot_dealer_ranking(dealers: pd.DataFrame, focus_id: str) -> plt.Figure:
+def plot_dealer_ranking(dealers: pd.DataFrame, focus_id: str,
+                        title="Top dealers by composite score", xlab="Dealer Score (0–100)") -> plt.Figure:
     top = dealers.head(15)
     colors = ["#ea580c" if d == focus_id else "#93c5fd" for d in top["dealer_id"]]
     fig, ax = plt.subplots(figsize=(7, 5))
     ax.barh(top["dealer_id"][::-1], top["dealer_score"][::-1], color=colors[::-1], height=0.62)
-    ax.set_xlabel("Dealer Score (0–100)")
-    ax.set_title("Top dealers by composite score", fontsize=11, pad=8)
+    ax.set_xlabel(xlab)
+    ax.set_title(title, fontsize=11, pad=8)
     ax.spines["top"].set_visible(False); ax.spines["right"].set_visible(False)
     ax.grid(axis="x", alpha=0.15); ax.set_axisbelow(True)
     plt.tight_layout()
@@ -421,8 +463,9 @@ def plot_dealer_ranking(dealers: pd.DataFrame, focus_id: str) -> plt.Figure:
 
 
 def plot_dealer_radar(row, lang) -> plt.Figure:
-    def _t(en, zh): return zh if lang == "中文" else en
-    cats = [_t("Sales", "销售"), _t("After-sales", "售后"), _t("CX", "客户体验"), _t("Compliance", "合规")]
+    zh = lang == "中文" and CJK_OK
+    cats = (["销售", "售后", "客户体验", "合规"] if zh else ["Sales", "After-sales", "CX", "Compliance"])
+    title = "经销商指数构成" if zh else "Dealer index breakdown"
     vals = [row.sales_index, row.aftersales_index, row.cx_index, row.compliance_index]
     angles = np.linspace(0, 2 * np.pi, len(cats), endpoint=False).tolist()
     vals_c = vals + vals[:1]; angles_c = angles + angles[:1]
@@ -432,7 +475,7 @@ def plot_dealer_radar(row, lang) -> plt.Figure:
     ax.set_xticks(angles); ax.set_xticklabels(cats, fontsize=9)
     ax.set_ylim(0, 100); ax.set_yticks([25, 50, 75, 100])
     ax.set_yticklabels(["25", "50", "75", "100"], fontsize=7, color="#94a3b8")
-    ax.set_title(_t("Dealer index breakdown", "经销商指数构成"), fontsize=11, pad=18)
+    ax.set_title(title, fontsize=11, pad=18)
     plt.tight_layout()
     return fig
 
@@ -457,6 +500,11 @@ lang = st.sidebar.radio("语言 / Language", ["English", "中文"], horizontal=T
 
 def t(en: str, zh: str) -> str:
     return zh if lang == "中文" else en
+
+
+def ct(en: str, zh: str) -> str:
+    """Chart text: Chinese only when a CJK font is loaded, else English (no tofu)."""
+    return zh if (lang == "中文" and CJK_OK) else en
 
 
 data = generate_dealer_network()
@@ -576,9 +624,9 @@ with exec_tab:
     st.divider()
     c1, c2 = st.columns(2)
     with c1:
-        st.pyplot(plot_monthly(monthly, "retail_units", t("Retail units — last 12 months", "零售销量 — 近12个月"), t("Units", "台")))
+        st.pyplot(plot_monthly(monthly, "retail_units", ct("Retail units — last 12 months", "零售销量 — 近12个月"), ct("Units", "台")))
     with c2:
-        st.pyplot(plot_monthly(monthly, "as_revenue", t("After-sales revenue — last 12 months", "售后收入 — 近12个月"), "CNY"))
+        st.pyplot(plot_monthly(monthly, "as_revenue", ct("After-sales revenue — last 12 months", "售后收入 — 近12个月"), "CNY"))
 
     st.markdown(f"#### {t('Drill-down entries','下钻入口')}")
     d1, d2, d3 = st.columns(3)
@@ -710,7 +758,9 @@ with dealer_tab:
 
     lc, rc = st.columns([1.1, 1])
     with lc:
-        st.pyplot(plot_dealer_ranking(dealers, FOCUS_DEALER_ID))
+        st.pyplot(plot_dealer_ranking(dealers, FOCUS_DEALER_ID,
+                                      title=ct("Top dealers by composite score", "经销商综合评分排名"),
+                                      xlab=ct("Dealer Score (0–100)", "综合分 (0–100)")))
     with rc:
         st.markdown(f"#### {t('Full ranking (50 dealers)','完整排名（50 家）')}")
         rank_tbl = pd.DataFrame({
@@ -797,7 +847,11 @@ with cpo_tab:
     st.markdown(dynamic_finding(status, price_gap_pct, fair_price, current_listing, rec_price, lang), unsafe_allow_html=True)
     cc, gc = st.columns([1.3, 1])
     with cc:
-        st.pyplot(plot_price_comparison(current_listing, fair_price, rec_price, status))
+        st.pyplot(plot_price_comparison(current_listing, fair_price, rec_price, status, txt={
+            "cur": ct("Current listing", "当前挂牌价"), "fair": ct("Fair value (model)", "公允价值"),
+            "rec": ct("Recommended", "建议价格"), "ylab": ct("Price (CNY)", "价格（元）"),
+            "title": ct("Pricing simulator output", "定价模拟器输出"),
+        }))
     with gc:
         st.markdown(f"#### {t('Pricing rules','定价规则')}")
         st.dataframe(pd.DataFrame({
@@ -805,7 +859,8 @@ with cpo_tab:
             t("Condition", "条件"): [f"> {THRESHOLD_PCT:.0%} {t('above fair','高于公允')}", f"> {THRESHOLD_PCT:.0%} {t('below fair','低于公允')}", f"{t('Within','在')} ±{THRESHOLD_PCT:.0%}"],
             t("Action", "操作"): [f"{t('fair ×','公允 ×')} {OVERPRICED_ADJ}", f"{t('fair ×','公允 ×')} {UNDERPRICED_ADJ}", t("Keep listing", "维持挂牌")],
         }), hide_index=True, use_container_width=True)
-        st.pyplot(plot_model_results())
+        st.pyplot(plot_model_results(title=ct("Pricing model comparison — shared holdout", "定价模型比较 — 同一验证集"),
+                                     xlab=ct("Validation MAE (CNY)", "验证集 MAE（元）")))
 
     st.divider()
     # ── B) Dealer CPO inventory action list (focus dealer) ──
