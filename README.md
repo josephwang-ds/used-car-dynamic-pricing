@@ -2,7 +2,7 @@
 
 End-to-end data science project for used-car **dynamic pricing**: exploratory analysis, feature engineering, gradient boosting benchmarks, ensemble modeling, and a Streamlit portfolio demo for pricing recommendations.
 
-The Streamlit app wraps this pricing model inside a **CPO Retail Command Center** — a single decision loop that connects the model to dealer-network analytics: a National Executive Overview, separate Sales and After-sales KPI systems, a 50-dealer Dealer 360 with a composite Dealer Score, and a CPO pricing & inventory action layer, with full English / 中文 switching.
+The Streamlit app wraps this pricing model inside a **CPO Retail Command Center** — a single decision loop that connects the model to dealer-network analytics, organized into three tabs: a National Executive Overview (with a KPI-grounded "ask the data" assistant and method notes), a combined Sales / After-sales / Dealer 360 analysis with a composite Dealer Score, and a single-store CPO pricing & inventory action layer, with full English / 中文 switching.
 
 > The dealer network is **100% synthetic and deterministic**. No real company data, dealer names, customers, VINs, targets, or incentives are used. The dealer layer demonstrates a metric system and decision flow designed from premium automotive dealer-analytics experience; Dealer Score weights and KPI formulas are transparent portfolio assumptions, not company definitions. See the app's About tab.
 
@@ -150,15 +150,13 @@ pip install -r requirements.txt
 streamlit run app/streamlit_app.py
 ```
 
-The app includes:
+The app is organized into three tabs:
 
-- **Executive Overview:** five Sales and five After-sales headline KPIs, trend context, and the management storyline.
-- **Sales KPI:** NC, CPO, and Vans target achievement tracked separately, plus conversion, discount, model mix, and inventory diagnostics.
-- **After-sales KPI:** revenue, gross profit, repair orders, retention, workshop utilization, technician efficiency, quality, and customer experience.
-- **Dealer 360:** a synthetic 50-dealer network, transparent composite Dealer Score, ranking, and dealer-level root-cause drill-down.
-- **CPO Pricing & Inventory:** single-vehicle price simulation plus a dealer action list for repricing, promotion, and stock transfer.
-- **AI Copilot:** live, bilingual, KPI-grounded management recommendations through the OpenAI Responses API, with deterministic offline fallback answers.
-- **About & Method:** metric definitions, model results, architecture, limitations, and the synthetic-data disclosure.
+- **Overview + Ask:** five Sales and five After-sales headline KPIs with trend context and the management storyline; a KPI-grounded "ask the data" (ChatBI) assistant that answers from the synthetic KPI layer; and an About & Method section covering metric definitions, model results, architecture, limitations, and the synthetic-data disclosure.
+- **Sales · After-sales · Dealer 360:** NC / CPO / Vans target achievement tracked separately (plus conversion, discount, model mix, and inventory diagnostics); after-sales revenue, retention, workshop utilization, technician efficiency, and customer experience; and a synthetic 50-dealer network with a transparent composite Dealer Score, ranking, and dealer-level root-cause drill-down.
+- **CPO Single-Store Pricing:** a focused single-store (DLR-E07) view — CPO inventory health, a per-car action list for repricing, promotion, and stock transfer, and a collapsible single-vehicle price simulator showing how the model prices one car.
+
+The "ask the data" assistant always returns a deterministic, KPI-grounded answer. If an OpenAI key is configured, an optional richer LLM write-up can be generated on top; if that call is unavailable, the deterministic answer is kept with no interruption.
 
 All dealer-network figures are deterministic synthetic data. The formulas and Dealer Score weights are proposed portfolio definitions rather than official former-employer definitions.
 
@@ -179,10 +177,9 @@ Place Streamlit demo screenshots under `reports/screenshots/` after deployment.
 
 Suggested screenshots:
 
-- Executive Overview
-- Sales KPI and After-sales KPI
-- Dealer 360 drill-down for `DLR-E07`
-- CPO Pricing & Inventory action list
+- Overview + Ask (headline KPIs and the ChatBI assistant)
+- Sales · After-sales · Dealer 360 drill-down for `DLR-E07`
+- CPO Single-Store Pricing action list
 - Chinese-language view
 
 ## Setup for Full Notebook Workflow

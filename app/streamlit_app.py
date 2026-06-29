@@ -809,14 +809,14 @@ service retention low, and its Executive Sedan 90+ day stock is overpriced. Foll
 
 # ── Tabs ──────────────────────────────────────────────────────────────────────
 tab_labels = (
-    ["🏠 全国总览", "📈 Sales KPI", "🔧 After-sales KPI", "🏆 Dealer 360",
-     "🚗 CPO 定价与库存", "🤖 AI 问数", "ℹ️ 关于与方法"]
+    ["🏠 全国总览 + 问数", "📊 Sales · After-sales · Dealer 360", "🚗 CPO 单店定价与库存"]
     if lang == "中文" else
-    ["🏠 Executive Overview", "📈 Sales KPI", "🔧 After-sales KPI", "🏆 Dealer 360",
-     "🚗 CPO Pricing & Inventory", "🤖 AI Narrative", "ℹ️ About & Method"]
+    ["🏠 Overview + Ask", "📊 Sales · After-sales · Dealer 360", "🚗 CPO Single-Store Pricing"]
 )
-(exec_tab, sales_tab, aftersales_tab, dealer_tab,
- cpo_tab, ai_tab, about_tab) = st.tabs(tab_labels)
+exec_tab, dealer_tab, cpo_tab = st.tabs(tab_labels)
+# Sales / After-sales / AI / About content is merged into the three tabs above.
+sales_tab = aftersales_tab = dealer_tab  # KPI detail lives under the Dealer 360 tab
+ai_tab = about_tab = exec_tab            # Ask-the-data + method live under Overview
 
 
 # ════════════════════════ TAB 1 — EXECUTIVE OVERVIEW ═════════════════════════
@@ -1100,88 +1100,14 @@ with dealer_tab:
 
 # ═══════════════════════ TAB 5 — CPO PRICING & INVENTORY ═════════════════════
 with cpo_tab:
-    st.subheader(t("CPO Pricing & Inventory Copilot", "CPO 定价与库存副驾"))
-    st.caption("150K listings · XGBoost / CatBoost / LightGBM · Weighted ensemble MAE = CNY 496.83")
-    st.markdown(f'<div class="callout">{t("This is the action layer: the used-car pricing model scores each vehicle, and aged / overpriced stock turns into reprice, promote or transfer actions.","这是行动层：二手车定价模型为每辆车打分，把老化、定价偏高的库存转化为调价、促销或跨店调拨。")}</div>', unsafe_allow_html=True)
+    st.subheader(t("CPO Pricing & Inventory — single-store view (DLR-E07)",
+                   "CPO 定价与库存 —— 单店视角（DLR-E07）"))
+    st.caption(t("One store, end to end: find the aged / overpriced CPO stock, then turn each car into a reprice, promote or transfer action.",
+                 "聚焦一家店，端到端：先找出老化、定价偏高的 CPO 库存，再把每辆车落到调价、促销或跨店调拨。"))
+    st.markdown(f'<div class="callout">{t("This is the action layer for DLR-E07. The used-car pricing model scores each vehicle in stock, and aged / overpriced cars become a concrete action list.","这是 DLR-E07 的行动层：二手车定价模型为该店每辆在库车打分，把老化、定价偏高的车转化为一份具体的行动清单。")}</div>', unsafe_allow_html=True)
 
-    # ── A) Single-vehicle pricing simulator (public dataset model) ──
-    st.markdown(f"#### {t('A. Single-vehicle pricing simulator','A. 单车定价模拟器')}")
-    st.markdown(f"**{t('Load a scenario:','加载场景：')}**")
-    p_cols = st.columns(3)
-    for col, (label, preset) in zip(p_cols, CAR_PRESETS.items()):
-        with col:
-            if st.button(label, width="stretch"):
-                p_copy = dict(preset); p_copy.pop("intro", None)
-                st.session_state["preset_inputs"] = p_copy
-                st.rerun()
-
-    # Vehicle inputs live here (in the CPO tab), not in the sidebar
-    with st.expander(t("⚙️ Adjust vehicle inputs", "⚙️ 调整车辆输入"), expanded=False):
-        ic1, ic2, ic3 = st.columns(3)
-        with ic1:
-            brand = st.selectbox(t("Brand tier (0=budget, 15=luxury)", "品牌档次 (0=经济,15=豪华)"), BRAND_OPTIONS, index=6)
-            model = st.selectbox(t("Model code", "车型代码"), MODEL_OPTIONS, index=3)
-            body_type_map = BODY_TYPE_NAMES_ZH if lang == "中文" else BODY_TYPE_NAMES_EN
-            body_type = st.selectbox(t("Body type", "车身类型"), BODY_TYPE_OPTIONS,
-                                     format_func=lambda x: body_type_map.get(int(x), str(x)), index=2)
-        with ic2:
-            car_age_years = st.slider(t("Vehicle age (years)", "车龄（年）"), 0.5, 20.0, 5.0, 0.5)
-            kilometer = st.slider(t("Mileage (10k km)", "里程（万公里）"), 0.5, 15.0, 5.0, 0.5)
-            power = st.slider(t("Engine power (hp)", "发动机功率（马力）"), 50, 600, 160, 10)
-        with ic3:
-            fuel_type = st.selectbox(t("Fuel type", "燃料类型"), FUEL_TYPE_OPTIONS,
-                                     format_func=lambda x: t("Petrol / Diesel", "汽油 / 柴油") if x == 0 else t("EV / Hybrid", "纯电 / 混动"))
-            gearbox = st.selectbox(t("Gearbox", "变速箱"), GEARBOX_OPTIONS,
-                                   format_func=lambda x: t("Manual", "手动") if x == 0 else t("Automatic", "自动"))
-            not_repaired_damage = st.selectbox(t("Damage status", "损坏状态"), DAMAGE_OPTIONS,
-                                               format_func=lambda x: t("No unrepaired damage", "无未修复损坏") if x == 0 else t("Has unrepaired damage", "有未修复损坏"))
-            current_listing = st.number_input(t("Current listing price (CNY)", "当前挂牌价（元）"),
-                                              min_value=500, max_value=200_000, value=12_000, step=500)
-    inputs = dict(brand=brand, model=model, body_type=body_type, car_age_years=car_age_years,
-                  kilometer=kilometer, power=power, not_repaired_damage=not_repaired_damage,
-                  fuel_type=fuel_type, gearbox=gearbox, current_listing=current_listing)
-    if "preset_inputs" in st.session_state:
-        for k, v in st.session_state.pop("preset_inputs").items():
-            if k != "intro":
-                inputs[k] = v
-    fair_price = predict_fair_price_mock(int(inputs["brand"]), float(inputs["model"]),
-                                         float(inputs["car_age_years"]), float(inputs["kilometer"]),
-                                         float(inputs["power"]), float(inputs["fuel_type"]),
-                                         float(inputs["gearbox"]), float(inputs["body_type"]),
-                                         float(inputs["not_repaired_damage"]))
-    current_listing = float(inputs["current_listing"])
-    price_gap_pct = (current_listing - fair_price) / fair_price if fair_price > 0 else 0.0
-    status = pricing_status(price_gap_pct)
-    rec_price = recommended_listing_price(fair_price, status, current_listing)
-
-    col1, col2, col3, col4 = st.columns(4)
-    col1.metric(t("Fair value (model)", "公允价值（模型）"), f"CNY {fair_price:,.0f}")
-    col2.metric(t("Current listing", "当前挂牌价"), f"CNY {current_listing:,.0f}")
-    col3.metric(t("Recommended", "建议价格"), f"CNY {rec_price:,.0f}")
-    delta_color = "inverse" if status == "Overpriced" else "normal" if status == "Underpriced" else "off"
-    status_label = {"Overpriced": t("Overpriced", "高估"), "Underpriced": t("Underpriced", "低估"), "Fair Price": t("Fair Price", "公允")}.get(status, status)
-    col4.metric(t("Gap vs fair value", "与公允价值差距"), f"{price_gap_pct:+.1%}", status_label, delta_color=delta_color)
-    st.markdown(dynamic_finding(status, price_gap_pct, fair_price, current_listing, rec_price, lang), unsafe_allow_html=True)
-    cc, gc = st.columns([1.3, 1])
-    with cc:
-        st.pyplot(plot_price_comparison(current_listing, fair_price, rec_price, status, txt={
-            "cur": ct("Current listing", "当前挂牌价"), "fair": ct("Fair value (model)", "公允价值"),
-            "rec": ct("Recommended", "建议价格"), "ylab": ct("Price (CNY)", "价格（元）"),
-            "title": ct("Pricing simulator output", "定价模拟器输出"),
-        }))
-    with gc:
-        st.markdown(f"#### {t('Pricing rules','定价规则')}")
-        st.dataframe(pd.DataFrame({
-            t("Status", "状态"): [t("Overpriced", "高估"), t("Underpriced", "低估"), t("Fair Price", "公允")],
-            t("Condition", "条件"): [f"> {THRESHOLD_PCT:.0%} {t('above fair','高于公允')}", f"> {THRESHOLD_PCT:.0%} {t('below fair','低于公允')}", f"{t('Within','在')} ±{THRESHOLD_PCT:.0%}"],
-            t("Action", "操作"): [f"{t('fair ×','公允 ×')} {OVERPRICED_ADJ}", f"{t('fair ×','公允 ×')} {UNDERPRICED_ADJ}", t("Keep listing", "维持挂牌")],
-        }), hide_index=True, width="stretch")
-        st.pyplot(plot_model_results(title=ct("Pricing model comparison — shared holdout", "定价模型比较 — 同一验证集"),
-                                     xlab=ct("Validation MAE (CNY)", "验证集 MAE（元）")))
-
-    st.divider()
-    # ── B) Dealer CPO inventory action list (focus dealer) ──
-    st.markdown(f"#### {t('B. CPO inventory & repricing actions','B. CPO 库存与调价行动')} — {FOCUS_DEALER_ID}")
+    # ── 1) Store CPO inventory health ──
+    st.markdown(f"#### {t('1. Store CPO inventory health','1. 单店 CPO 库存健康度')} — {FOCUS_DEALER_ID}")
     aged = cpo_inventory[cpo_inventory.days_in_stock >= 90]
     eclass_aged = aged[aged.model == "Executive Sedan"]
     margin_at_risk = float((aged[aged.gap_pct > 0.08].current_price * 0.05).sum())
@@ -1197,8 +1123,8 @@ with cpo_tab:
                                    title=ct("Price gap vs days in stock", "价差 × 在库天数"),
                                    xlab=ct("Days in stock", "在库天数"),
                                    ylab=ct("Price gap %", "价差 %")))
-        st.caption(t("Top-right cluster (overpriced + aged) is where reprice/promote/transfer concentrate.",
-                     "右上角（高估且老化）正是调价/促销/调拨集中的区域。"))
+        st.caption(t("Top-right cluster (overpriced + aged) is where reprice / promote / transfer concentrate.",
+                     "右上角（高估且老化）正是调价 / 促销 / 调拨集中的区域。"))
     with gc2:
         st.pyplot(plot_action_breakdown(cpo_inventory,
                                         title=ct("Recommended actions", "推荐行动分布"),
@@ -1208,14 +1134,16 @@ with cpo_tab:
 
     segs = [m for m in CPO_MODELS if m in cpo_inventory.model.values]
     fresh = [int(((cpo_inventory.model == m) & (cpo_inventory.days_in_stock < 90)).sum()) for m in segs]
-    aged = [int(((cpo_inventory.model == m) & (cpo_inventory.days_in_stock >= 90)).sum()) for m in segs]
+    aged_seg = [int(((cpo_inventory.model == m) & (cpo_inventory.days_in_stock >= 90)).sum()) for m in segs]
     seg_lbl = [CPO_MODELS_ZH[m] if (lang == "中文" and CJK_OK) else m for m in segs]
-    st.pyplot(plot_inv_by_segment(seg_lbl, fresh, aged,
+    st.pyplot(plot_inv_by_segment(seg_lbl, fresh, aged_seg,
                                   title=ct("CPO stock by segment — aged share", "CPO 库存按车型 — 老化占比"),
                                   fresh_lbl=ct("< 90 days", "<90天"), aged_lbl=ct("90+ days", "90天+")))
     st.caption(t("Executive Sedan is both the largest segment and the most aged — the clearest reprice target.",
                  "行政轿车既是最大车型，老化也最严重 —— 最明确的调价目标。"))
 
+    # ── 2) Per-car action list ──
+    st.markdown(f"#### {t('2. Per-car action list','2. 单车行动清单')}")
     model_filter = st.multiselect(t("Filter by model", "按车型筛选"),
                                   [CPO_MODELS_ZH[m] if lang == "中文" else m for m in CPO_MODELS],
                                   default=[])
@@ -1247,10 +1175,87 @@ with cpo_tab:
                 f'{t("Executive Sedan 90+ day stock is the largest overpriced cluster — reprice first, then bundle a service package to lift retention.","行政轿车 90 天以上库存是最大的高估集群 —— 先调价，再配合保养套餐提升回厂率。")}</div>',
                 unsafe_allow_html=True)
 
+    # ── 3) How the model prices a single car (secondary detail, collapsed) ──
+    st.divider()
+    with st.expander(t("🔧 How the model prices one car (single-vehicle simulator)",
+                       "🔧 模型如何给一辆车定价（单车定价模拟器）"), expanded=False):
+        st.caption("150K listings · XGBoost / CatBoost / LightGBM · Weighted ensemble MAE = CNY 496.83")
+        st.markdown(f"**{t('Load a scenario:','加载场景：')}**")
+        p_cols = st.columns(3)
+        for col, (label, preset) in zip(p_cols, CAR_PRESETS.items()):
+            with col:
+                if st.button(label, width="stretch"):
+                    p_copy = dict(preset); p_copy.pop("intro", None)
+                    st.session_state["preset_inputs"] = p_copy
+                    st.rerun()
+
+        ic1, ic2, ic3 = st.columns(3)
+        with ic1:
+            brand = st.selectbox(t("Brand tier (0=budget, 15=luxury)", "品牌档次 (0=经济,15=豪华)"), BRAND_OPTIONS, index=6)
+            model = st.selectbox(t("Model code", "车型代码"), MODEL_OPTIONS, index=3)
+            body_type_map = BODY_TYPE_NAMES_ZH if lang == "中文" else BODY_TYPE_NAMES_EN
+            body_type = st.selectbox(t("Body type", "车身类型"), BODY_TYPE_OPTIONS,
+                                     format_func=lambda x: body_type_map.get(int(x), str(x)), index=2)
+        with ic2:
+            car_age_years = st.slider(t("Vehicle age (years)", "车龄（年）"), 0.5, 20.0, 5.0, 0.5)
+            kilometer = st.slider(t("Mileage (10k km)", "里程（万公里）"), 0.5, 15.0, 5.0, 0.5)
+            power = st.slider(t("Engine power (hp)", "发动机功率（马力）"), 50, 600, 160, 10)
+        with ic3:
+            fuel_type = st.selectbox(t("Fuel type", "燃料类型"), FUEL_TYPE_OPTIONS,
+                                     format_func=lambda x: t("Petrol / Diesel", "汽油 / 柴油") if x == 0 else t("EV / Hybrid", "纯电 / 混动"))
+            gearbox = st.selectbox(t("Gearbox", "变速箱"), GEARBOX_OPTIONS,
+                                   format_func=lambda x: t("Manual", "手动") if x == 0 else t("Automatic", "自动"))
+            not_repaired_damage = st.selectbox(t("Damage status", "损坏状态"), DAMAGE_OPTIONS,
+                                               format_func=lambda x: t("No unrepaired damage", "无未修复损坏") if x == 0 else t("Has unrepaired damage", "有未修复损坏"))
+            current_listing = st.number_input(t("Current listing price (CNY)", "当前挂牌价（元）"),
+                                              min_value=500, max_value=200_000, value=12_000, step=500)
+        inputs = dict(brand=brand, model=model, body_type=body_type, car_age_years=car_age_years,
+                      kilometer=kilometer, power=power, not_repaired_damage=not_repaired_damage,
+                      fuel_type=fuel_type, gearbox=gearbox, current_listing=current_listing)
+        if "preset_inputs" in st.session_state:
+            for pk, pv in st.session_state.pop("preset_inputs").items():
+                if pk != "intro":
+                    inputs[pk] = pv
+        fair_price = predict_fair_price_mock(int(inputs["brand"]), float(inputs["model"]),
+                                             float(inputs["car_age_years"]), float(inputs["kilometer"]),
+                                             float(inputs["power"]), float(inputs["fuel_type"]),
+                                             float(inputs["gearbox"]), float(inputs["body_type"]),
+                                             float(inputs["not_repaired_damage"]))
+        current_listing = float(inputs["current_listing"])
+        price_gap_pct = (current_listing - fair_price) / fair_price if fair_price > 0 else 0.0
+        status = pricing_status(price_gap_pct)
+        rec_price = recommended_listing_price(fair_price, status, current_listing)
+
+        col1, col2, col3, col4 = st.columns(4)
+        col1.metric(t("Fair value (model)", "公允价值（模型）"), f"CNY {fair_price:,.0f}")
+        col2.metric(t("Current listing", "当前挂牌价"), f"CNY {current_listing:,.0f}")
+        col3.metric(t("Recommended", "建议价格"), f"CNY {rec_price:,.0f}")
+        delta_color = "inverse" if status == "Overpriced" else "normal" if status == "Underpriced" else "off"
+        status_label = {"Overpriced": t("Overpriced", "高估"), "Underpriced": t("Underpriced", "低估"), "Fair Price": t("Fair Price", "公允")}.get(status, status)
+        col4.metric(t("Gap vs fair value", "与公允价值差距"), f"{price_gap_pct:+.1%}", status_label, delta_color=delta_color)
+        st.markdown(dynamic_finding(status, price_gap_pct, fair_price, current_listing, rec_price, lang), unsafe_allow_html=True)
+        cc, gc = st.columns([1.3, 1])
+        with cc:
+            st.pyplot(plot_price_comparison(current_listing, fair_price, rec_price, status, txt={
+                "cur": ct("Current listing", "当前挂牌价"), "fair": ct("Fair value (model)", "公允价值"),
+                "rec": ct("Recommended", "建议价格"), "ylab": ct("Price (CNY)", "价格（元）"),
+                "title": ct("Pricing simulator output", "定价模拟器输出"),
+            }))
+        with gc:
+            st.markdown(f"##### {t('Pricing rules','定价规则')}")
+            st.dataframe(pd.DataFrame({
+                t("Status", "状态"): [t("Overpriced", "高估"), t("Underpriced", "低估"), t("Fair Price", "公允")],
+                t("Condition", "条件"): [f"> {THRESHOLD_PCT:.0%} {t('above fair','高于公允')}", f"> {THRESHOLD_PCT:.0%} {t('below fair','低于公允')}", f"{t('Within','在')} ±{THRESHOLD_PCT:.0%}"],
+                t("Action", "操作"): [f"{t('fair ×','公允 ×')} {OVERPRICED_ADJ}", f"{t('fair ×','公允 ×')} {UNDERPRICED_ADJ}", t("Keep listing", "维持挂牌")],
+            }), hide_index=True, width="stretch")
+            st.pyplot(plot_model_results(title=ct("Pricing model comparison — shared holdout", "定价模型比较 — 同一验证集"),
+                                         xlab=ct("Validation MAE (CNY)", "验证集 MAE（元）")))
+
 
 # ═══════════════════════════ TAB 6 — AI NARRATIVE ════════════════════════════
 with ai_tab:
-    st.subheader(t("AI Narrative / ChatBI", "AI 问数 / ChatBI"))
+    st.divider()
+    st.subheader(t("💬 Ask the data (ChatBI)", "💬 问数 / ChatBI"))
     st.caption(t("Ask a business question in natural language; the assistant answers from the synthetic KPI layer.",
                  "用自然语言提问；助手基于合成 KPI 层回答。"))
     questions_en = [
@@ -1303,47 +1308,40 @@ DLR-E07 CPO days supply: {focus.days_supply:.0f}; 90+ aging rate: {focus.aging_9
 CPO inventory: {len(cpo_inventory)} units; 90+ days: {len(aged)}; reprice actions: {int(action_counts.get('Reprice', 0))}; promote actions: {int(action_counts.get('Promote', 0))}; transfer actions: {int(action_counts.get('Transfer', 0))}.
 Dealer Score is a proposed portfolio formula: 45% Sales + 35% After-sales + 15% CX + 5% compliance; it is not an official company definition."""
 
-    llm_ready = bool(get_secret("OPENAI_API_KEY"))
-    if llm_ready:
-        st.success(t("Live LLM Copilot is ready", "实时 LLM Copilot 已连接"), icon="✅")
-        if st.button(t("Generate LLM recommendation", "生成 LLM 经营建议"), type="primary"):
-            with st.spinner(t("Analyzing the synthetic KPI layer...", "正在分析合成 KPI 层……")):
-                try:
-                    st.session_state["llm_answer"] = generate_llm_recommendation(
-                        active_question, kpi_context, lang
-                    )
-                    st.session_state["llm_question"] = active_question
-                except Exception:
-                    st.session_state.pop("llm_answer", None)
-                    st.warning(t(
-                        "The LLM call is temporarily unavailable. Showing the deterministic KPI fallback instead.",
-                        "LLM 暂时无法调用，现显示确定性的 KPI 规则答案。",
-                    ))
-    else:
-        st.info(t(
-            "Add OPENAI_API_KEY in Streamlit Secrets to enable live recommendations. Offline fallback is active.",
-            "在 Streamlit Secrets 中添加 OPENAI_API_KEY 即可启用实时建议；当前使用离线规则答案。",
-        ))
+    # The deterministic KPI answer is always the primary, always-available result.
+    st.markdown(f'<div class="story-box">🤖 {fallback_answer}</div>', unsafe_allow_html=True)
+    st.caption(t(
+        "Grounded answer computed directly from the synthetic KPI layer.",
+        "基于合成 KPI 层直接计算得出的答案。",
+    ))
 
-    live_answer = st.session_state.get("llm_answer")
-    live_question = st.session_state.get("llm_question")
-    if live_answer and live_question == active_question:
-        st.markdown(live_answer)
-        st.caption(t(
-            "LLM recommendation grounded only in aggregated synthetic demo KPIs; verify before action.",
-            "LLM 建议仅基于聚合后的合成演示 KPI；采取行动前仍需人工核验。",
-        ))
-    else:
-        st.markdown(f'<div class="story-box">🤖 {fallback_answer}</div>', unsafe_allow_html=True)
-        st.caption(t(
-            "Deterministic fallback answer from the synthetic KPI layer.",
-            "来自合成 KPI 层的确定性兜底答案。",
-        ))
+    # Optional: if an OpenAI key is configured, offer a richer LLM write-up on top.
+    # If the call ever fails, we silently keep the deterministic answer above — no error shown.
+    if bool(get_secret("OPENAI_API_KEY")):
+        with st.expander(t("✨ Optional: generate a richer LLM write-up", "✨ 可选：生成更丰富的 LLM 经营建议"), expanded=False):
+            if st.button(t("Generate LLM recommendation", "生成 LLM 经营建议"), type="primary"):
+                with st.spinner(t("Analyzing the synthetic KPI layer...", "正在分析合成 KPI 层……")):
+                    try:
+                        st.session_state["llm_answer"] = generate_llm_recommendation(
+                            active_question, kpi_context, lang
+                        )
+                        st.session_state["llm_question"] = active_question
+                    except Exception:
+                        st.session_state.pop("llm_answer", None)
+            live_answer = st.session_state.get("llm_answer")
+            live_question = st.session_state.get("llm_question")
+            if live_answer and live_question == active_question:
+                st.markdown(live_answer)
+                st.caption(t(
+                    "LLM recommendation grounded only in aggregated synthetic demo KPIs; verify before action.",
+                    "LLM 建议仅基于聚合后的合成演示 KPI；采取行动前仍需人工核验。",
+                ))
 
 
 # ═══════════════════════════ TAB 7 — ABOUT & METHOD ══════════════════════════
 with about_tab:
-    st.subheader(t("About this demo", "关于本演示"))
+    st.divider()
+    st.subheader(t("ℹ️ About & Method", "ℹ️ 关于与方法"))
     if lang == "中文":
         st.markdown("""<div class="callout">
 <b>这是什么：</b>一个作品集产品，把我在<b>高端汽车经销商数据分析</b>中的经验，

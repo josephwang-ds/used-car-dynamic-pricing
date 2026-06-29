@@ -42,6 +42,8 @@ outputs/*
 docs/interview_script.md
 docs/resume_project_packaging.md
 interview_guide.md
+project_summary.md
+technical_deep_dive.md
 private-prep/
 private-prep
 node_modules/
