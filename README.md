@@ -17,7 +17,7 @@ The public app is intentionally lightweight. Raw data, processed data, model art
 
 - Built a complete pricing workflow from EDA and feature engineering to model benchmarking, ensemble validation, and business recommendation logic.
 - Benchmarked **XGBoost**, **CatBoost**, and **LightGBM** on the same validation split, then improved performance with a weighted ensemble.
-- Achieved best validation MAE of **496.83 CNY**, outperforming each individual benchmark model.
+- Achieved best validation MAE of **496.83** (≈ 8.4% of the mean listing price; prices in this competition dataset are desensitized), outperforming each individual benchmark model.
 - Converted model output into business-facing actions: fair price, overpricing flag, underpricing flag, and recommended listing price.
 - Deployed a public Streamlit demo that stays runnable without raw data or model artifacts by using transparent rule-based pricing logic.
 
@@ -43,7 +43,7 @@ This project builds a reproducible workflow from raw listings to model predictio
 
 ## Dataset
 
-- **Source:** Used car training data (`used_car_train_20200313.csv`)
+- **Source:** Tianchi used-car price prediction competition (`used_car_train_20200313.csv`); prices are desensitized by the organizer
 - **Size:** 150,000 rows x 31 columns raw; 49 columns after feature engineering
 - **Target:** `price`
 - **Format:** Space-separated CSV; some fields use `-` for missing values
@@ -129,7 +129,7 @@ The model estimates a fair market price for each listing. The pricing layer then
 - **Underpriced:** listing price is more than 10% below fair price
 - **Fair Price:** listing is within the +/-10% band
 
-A validation MAE of **496.83 CNY** means the best model is typically within a few hundred yuan of the observed price on the holdout set. In a marketplace setting, this is most useful as a decision-support signal: flag materially mispriced listings, guide seller pricing, and prioritize operational review.
+A validation MAE of **496.83** is about 8.4% of the mean price in this dataset (mean ≈ 5,923, median 3,250). The prices are desensitized by the competition organizer, so read the error in relative terms rather than as yuan on a real car.
 
 ## Limitations
 
